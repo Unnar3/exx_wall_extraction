@@ -1,4 +1,5 @@
 #include <ros/ros.h>
+#include <exx_plane_extraction/plane_extraction_node.h>
 // PCL specific includes
 #include <pcl/io/pcd_io.h>
 #include <sensor_msgs/PointCloud2.h>
@@ -60,6 +61,7 @@
 
 typedef pcl::PointXYZRGB PointT;
 using namespace std;
+using namespace exx::plane_extraction_node;
 
 class PlaneExtraction
 {
@@ -83,6 +85,13 @@ public:
 
     void extractPlanes()
     {
+
+        pcl::PointCloud <pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud <pcl::PointXYZ>);
+        if ( pcl::io::loadPCDFile <pcl::PointXYZ> ("/home/unnar/Desktop/PointCloud/room_0/intermediate_cloud0034.pcd", *cloud) == -1 )
+        {
+            std::cout << "Cloud reading failed." << std::endl;
+            return;
+        }
 
     }
 
