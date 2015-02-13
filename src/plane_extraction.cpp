@@ -7,8 +7,6 @@
 #include <pcl/conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/filters/passthrough.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/sample_consensus/model_types.h>
@@ -16,7 +14,8 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/kdtree/kdtree.h>
-#include <pcl/surface/mls.h>
+#include <pcl/filters/project_inliers.h>
+#include <pcl/surface/concave_hull.h>
 //#include <pcl/features/moment_of_inertia_estimation.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/ModelCoefficients.h>
@@ -28,36 +27,15 @@
 #include <cstdlib>
 #include <vector>
 #include <cmath>
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>       /* time */
 
 
 // DEFINITIONS
 #define HZ                  10
 #define BUFFER_SIZE         1
 
-#define NODE_NAME           		"s8_object_detection_node"
-#define TOPIC_POINT_CLOUD   		"/camera/depth_registered/points"
-#define TOPIC_EXTRACTED_OBJECTS		"/s8/detectedObject"
-#define TOPIC_IS_FRONT_WALL         "/s8/isFrontWall"
-#define TOPIC_OBJECTS_POS		    "/s8/ip/detection/distPose"
-#define CONFIG_DOC                  "/catkin_ws/src/s8_ip_detection/parameters/parameters.json"
-
-// PARAMETERS
-#define PARAM_FILTER_X_NAME						"filter_x"
-#define PARAM_FILTER_X_DEFAULT					0.1
-#define PARAM_FILTER_Z_NAME						"filter_z"
-#define PARAM_FILTER_Z_DEFAULT					1.0
-#define PARAM_FILTER_Y_NAME						"filter_y"
-#define PARAM_FILTER_Y_DEFAULT					0.2
-#define PARAM_FLOOR_EXTRACTION_DIST_NAME		"floor_extraction_dist"
-#define PARAM_FLOOR_EXTRACTION_DIST_DEFAULT		0.02
-#define PARAM_VOXEL_LEAF_SIZE_NAME				"voxel_leaf_size"
-#define PARAM_VOXEL_LEAF_SIZE_DEFAULT			0.005
-#define PARAM_SEG_DISTANCE_NAME					"seg_distance"
-#define PARAM_SEG_DISTANCE_DEFAULT				0.01
-#define PARAM_SEG_PERCENTAGE_NAME				"seg_percentage"
-#define PARAM_SEG_PERCENTAGE_DEFAULT			0.2
-#define PARAM_CAM_ANGLE_NAME				    "cam_angle"
-#define PARAM_CAM_ANGLE_DEFAULT			        0.4
+#define NODE_NAME           		"plane_extraction_node"
 
 typedef pcl::PointXYZRGB PointT;
 using namespace std;
@@ -71,27 +49,44 @@ class PlaneExtraction
 
     double	voxel_leaf_size;
     double 	seg_distance, seg_percentage, normal_distance_weight;
+    std::string point_cloud_name;
 
 public:
     PlaneExtraction(int hz) : hz(hz)
     {
         add_params();
-        //printParams();
-
         nh = ros::NodeHandle("~");
-
-        //cloud = pcl::PointCloud<PointT>::Ptr (new pcl::PointCloud<PointT>);
     }
 
     void extractPlanes()
     {
 
-        pcl::PointCloud <pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud <pcl::PointXYZ>);
-        if ( pcl::io::loadPCDFile <pcl::PointXYZ> ("/home/unnar/Desktop/PointCloud/room_0/intermediate_cloud0034.pcd", *cloud) == -1 )
+        pcl::PointCloud <PointT>::Ptr cloud (new pcl::PointCloud <PointT>);
+        if ( pcl::io::loadPCDFile <PointT> ("/home/unnar/Desktop/PointCloud/room_0/" + point_cloud_name, *cloud) == -1 )
         {
             std::cout << "Cloud reading failed." << std::endl;
             return;
+        } else {
+            std::cout << "Cloud reading successful." << std::endl;
+            std::cerr << "has " << cloud->points.size () << " number of data points." << std::endl;
         }
+
+        ros::Time begin = ros::Time::now();
+        voxelGrid(cloud);
+        
+        pcl::PointCloud <PointT>::Ptr cloud_plane (new pcl::PointCloud <PointT>);
+        removePlanes(cloud, cloud_plane);
+
+        ros::Time end = ros::Time::now();
+        ros::Duration duration = end - begin;
+        ROS_INFO("Algorithm finished after %f seconds...", duration.toSec());
+
+        *cloud += *cloud_plane;
+
+        pcl::io::savePCDFileASCII ("test_pcd.pcd", *cloud);
+        pcl::io::savePCDFileASCII ("test_pcd_plane.pcd", *cloud_plane);
+        std::cerr << "Saved " << cloud->points.size () << " data points to test_pcd.pcd." << std::endl;
+        std::cerr << "Saved " << cloud_plane->points.size () << " data points to test_pcd_plane.pcd." << std::endl;
 
     }
 
@@ -108,60 +103,84 @@ private:
 
     // Down samples the point cloud using VoxelGrid filter
     // to make computations easier.
-    void voxelGridCloud(pcl::PointCloud<PointT>::Ptr cloud_stat)
+    void voxelGrid(pcl::PointCloud<PointT>::Ptr cloud_stat)
     {
+        pcl::PointCloud <PointT>::Ptr cloud_voxel (new pcl::PointCloud <PointT>);
         pcl::VoxelGrid<PointT> sor;
         sor.setInputCloud (cloud_stat);
         sor.setLeafSize ((float)voxel_leaf_size, (float)voxel_leaf_size, (float)voxel_leaf_size);
-        sor.filter (*cloud_stat);
+        sor.filter (*cloud_voxel);
+        *cloud_stat = *cloud_voxel;
     }
 
-    pcl::PointCloud<PointT>::Ptr removeWallsCloud(pcl::PointCloud<PointT>::Ptr cloud_seg)
+    pcl::PointCloud<PointT>::Ptr removePlanes(pcl::PointCloud<PointT>::Ptr cloud_seg, pcl::PointCloud<PointT>::Ptr cloud_p)
     {
         pcl::PointCloud<PointT>::Ptr cloud_plane (new pcl::PointCloud<PointT>);
+        pcl::PointCloud<PointT>::Ptr cloud_plane_tmp (new pcl::PointCloud<PointT>);
         pcl::ModelCoefficients::Ptr coeff (new pcl::ModelCoefficients);
         pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
 
-        pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
-        pcl::search::KdTree<PointT>::Ptr tree (new pcl::search::KdTree<PointT> ());
-        pcl::NormalEstimation<PointT, pcl::Normal> ne;
-
-        pcl::SACSegmentationFromNormals<PointT, pcl::Normal> seg;
+        pcl::SACSegmentation<PointT> seg;
         pcl::ExtractIndices<PointT> extract;
 
-        // Estimate point normals
-        ne.setSearchMethod (tree);
-        ne.setKSearch (50);
 
         seg.setOptimizeCoefficients (true);
-        seg.setModelType (pcl::SACMODEL_NORMAL_PLANE);
+        seg.setModelType (pcl::SACMODEL_PLANE);
         seg.setMethodType (pcl::SAC_RANSAC);
         seg.setDistanceThreshold (seg_distance);
-        seg.setNormalDistanceWeight (normal_distance_weight);
-        seg.setMaxIterations (1000);
+        seg.setMaxIterations (100);
 
-        int i = 0, nr_points = (int) cloud_seg->points.size ();
+        int i = 0, 
+        nr_points = (int) cloud_seg->points.size ();
         // While 20% of the original cloud is still there
-        while (cloud_seg->points.size () > seg_percentage * nr_points && i < 10 && cloud_seg->points.size() > 0)
+        int r,g,b;
+        srand (time(NULL));
+        while (i < 100 && cloud_seg->points.size() > 0 && cloud_seg->points.size() > 0.1 * nr_points)
         {
             //seg.setInputCloud (cloud);
-            ne.setInputCloud (cloud_seg);
-            ne.compute (*cloud_normals);
-            //seg.setInputCloud (cloud);
             seg.setInputCloud (cloud_seg);
-            seg.setInputNormals (cloud_normals);
             seg.segment (*inliers, *coeff);
             if (inliers->indices.size () == 0)
             {
                 break;
             }
-            if(inliers->indices.size() < nr_points/20 || inliers->indices.size() < 10){
+            if(inliers->indices.size() < 200){
                 i++;
                 continue;
             }
             // Extract the planar inliers from the input cloud
             extract.setInputCloud (cloud_seg);
             extract.setIndices (inliers);
+
+            extract.setNegative (false);
+            extract.filter (*cloud_plane_tmp);
+            // Loop through all points to find si
+            r = rand()%255;
+            for(int iter = 1; iter != cloud_plane_tmp->points.size(); ++iter)
+            {
+                cloud_plane_tmp->points[iter].r =  155;
+                cloud_plane_tmp->points[iter].g =  r;
+                cloud_plane_tmp->points[iter].b =  r;
+            }
+            // Create the filtering object
+            pcl::ProjectInliers<PointT> proj;
+            proj.setModelType (pcl::SACMODEL_PLANE);
+            proj.setInputCloud (cloud_plane_tmp);
+            proj.setModelCoefficients (coeff);
+            proj.filter (*cloud_plane_tmp);
+            
+            // Create a Concave Hull representation of the projected inliers
+            /*
+            pcl::ConcaveHull<PointT> chull;
+            chull.setInputCloud (cloud_plane_tmp);
+            chull.setAlpha (0.1);
+            chull.reconstruct (*cloud_plane_tmp);
+            */  
+            *cloud_p += *cloud_plane_tmp;
+
+
+            extract.setNegative (true);
+            extract.filter (*cloud_plane);
             extract.setNegative (true);
             extract.filter (*cloud_plane);
             cloud_seg.swap (cloud_plane);
@@ -172,18 +191,20 @@ private:
 
     void add_params()
     {
-        //std::string home(::getenv("HOME"));
-        //ROS_INFO("home: %s", CONFIG_DOC);
-        //boost::property_tree::ptree pt;
-        //boost::property_tree::read_json(home + CONFIG_DOC, pt);
-        // CIRCLE
-        //filter_x = pt.get<double>("filter_x");
+        boost::property_tree::ptree pt;
+        boost::property_tree::read_json(CONFIG_DOC, pt);
+        // point cloud name
+        point_cloud_name = pt.get<string>("point_cloud_name");
+        voxel_leaf_size = pt.get<double>("voxel_leaf_size");
+        seg_distance = pt.get<double>("seg_distance");
+        seg_percentage = pt.get<double>("seg_percentage");
+        normal_distance_weight = pt.get<double>("normal_distance_weight");
     }
 };
 
 int main(int argc, char **argv) {
 
-    ros::init(argc, argv, "plane_extraction");
+    ros::init(argc, argv, NODE_NAME);
 
     PlaneExtraction extractor(HZ);
     ros::Rate loop_rate(HZ);
