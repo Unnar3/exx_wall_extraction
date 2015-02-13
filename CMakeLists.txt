@@ -18,15 +18,15 @@ find_package(catkin REQUIRED COMPONENTS
 #	distPose.msg
 #)
 
-generate_messages(DEPENDENCIES
-	std_msgs
-)
+#generate_messages(DEPENDENCIES
+#	std_msgs
+#)
 
 catkin_package(
 	DEPENDS
-	CATKIN_DEPENDS message_runtime s8_common_node s8_msgs
+	CATKIN_DEPENDS message_runtime
 )
-include_directories(${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 
 add_executable(plane_extraction src/plane_extraction.cpp)
