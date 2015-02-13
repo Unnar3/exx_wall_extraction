@@ -1,29 +1,11 @@
 // Configuration options
 {
-    // PassThrough Filter
-    "filter_x"                  :   "0.2",
-    "filter_y"                  :   "0.2",
-    "filter_z"                  :   "0.8",
-    "max_object_height"         :   "0",
-    // Floor remover
-    "floor_extraction_dist"     :   "0.03",
+    // Name of pointcloud to be loaded
+    "point_cloud_name"          :   "intermediate_cloud0037.pcd",    
     // Voxel grid filter
-    "voxel_leaf_size"           :   "0.005", 
+    "voxel_leaf_size"           :   "0.02",
     // Plane Segmentation
-    "seg_distance"              :   "0.03",
+    "seg_distance"              :   "0.02",
     "seg_percentage"            :   "0.2",
-    "normal_distance_weight"    :   "0.03",
-    // Camera Angle
-    "cam_angle"                 :   "0.22",
-    // FLOOR AND WALL REJECTION
-    "H_floor_high"              :   "15",
-    "H_floor_low"               :   "30",
-    "S_floor_high"              :   "85",
-    "S_floor_low"               :   "140",
-    "V_floor_high"              :   "0",
-    "V_floor_low"               :   "200",
-    "H_wall_high"               :   "0",
-    "H_wall_low"                :   "0",
-    "S_wall_high"               :   "0",
-    "S_wall_low"                :   "0"
+    "normal_distance_weight"    :   "0.03"
 }
