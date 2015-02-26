@@ -20,6 +20,9 @@
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/ModelCoefficients.h>
 #include <pcl/common/transforms.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/surface/gp3.h>
 // OTHER
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -155,6 +158,7 @@ private:
             extract.setNegative (false);
             extract.filter (*cloud_plane_tmp);
             // Loop through all points to find si
+            /*
             r = rand()%255;
             for(int iter = 1; iter != cloud_plane_tmp->points.size(); ++iter)
             {
@@ -162,21 +166,31 @@ private:
                 cloud_plane_tmp->points[iter].g =  r;
                 cloud_plane_tmp->points[iter].b =  r;
             }
+            */
             // Create the filtering object
             pcl::ProjectInliers<PointT> proj;
             proj.setModelType (pcl::SACMODEL_PLANE);
             proj.setInputCloud (cloud_plane_tmp);
             proj.setModelCoefficients (coeff);
             proj.filter (*cloud_plane_tmp);
+
+            pcl::PointCloud <PointT>::Ptr cloud_voxel (new pcl::PointCloud <PointT>);
+            pcl::VoxelGrid<PointT> sor;
+            sor.setInputCloud (cloud_plane_tmp);
+            sor.setLeafSize (0.1, 0.1, 0.1);
+            sor.filter (*cloud_voxel);;
             
             // Create a Concave Hull representation of the projected inliers
-            /*
+            pcl::PointCloud <PointT>::Ptr cloud_plane_hull (new pcl::PointCloud <PointT>);
             pcl::ConcaveHull<PointT> chull;
-            chull.setInputCloud (cloud_plane_tmp);
+            chull.setInputCloud (cloud_voxel);
             chull.setAlpha (0.1);
-            chull.reconstruct (*cloud_plane_tmp);
-            */  
-            *cloud_p += *cloud_plane_tmp;
+            chull.reconstruct (*cloud_plane_hull);
+
+             
+            *cloud_p += *cloud_plane_hull;
+            //*cloud_p += *cloud_voxel;
+
 
 
             extract.setNegative (true);
