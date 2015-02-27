@@ -39,7 +39,7 @@
 #define BUFFER_SIZE         1
 #define NODE_NAME           "plane_compression_node"
 
-typedef pcl::PointXYZRGB PointT;
+typedef pcl::PointXYZ PointT;
 
 class PlaneCompression : public compressMethods
 {
@@ -62,13 +62,30 @@ public:
 
 
         // Extract planes
-        std::vector<pcl::PointCloud<PointT> > planes; 
-        std::vector<pcl::ModelCoefficients > coeffs;
+        std::vector<pcl::PointCloud<PointT>::Ptr > planes; 
+        std::vector<pcl::ModelCoefficients::Ptr > coeffs;
         removePlanes(cloud, &planes, &coeffs);
         std::cout << "Number of planes: " << int(planes.size()) << std::endl;
         std::cout << "Number of coefficients: " << int(coeffs.size()) << std::endl;
-        std::cout << "One plane AFTER plane extraction:" << std::endl;
-        pcl::io::savePCDFileASCII ("compressed_one_plane.pcd", planes[0]);
+
+        pcl::PointCloud<PointT>::Ptr cloud_plane;
+        cloud_plane = planes[0];
+        *cloud_plane += *(planes[1]); 
+        pcl::io::savePCDFileASCII ("compressed_extracted_planes.pcd", *cloud_plane);
+
+/*
+        // Project points to the planes
+        projectToPlane(&planes, &coeffs);
+        cloud_plane = planes[0];
+        *cloud_plane += *(planes[1]); 
+        pcl::io::savePCDFileASCII ("compressed_extracted_projected_planes.pcd", *cloud_plane);
+*/
+
+        // calculate concave hull
+        std::vector<pcl::PointCloud<PointT>::Ptr > hulls; 
+        planeToConcaveHull(&planes, &hulls);
+        std::cout << "Hull count: " << hulls[0] -> points.size() << std::endl; 
+        pcl::io::savePCDFileASCII ("compressed_hulls_planes.pcd", *(hulls[1]));
     }
 
     private:
@@ -82,6 +99,8 @@ int main(int argc, char **argv) {
     PlaneCompression compressor;
     ros::Rate loop_rate(HZ);
   
+
+    std::cout << "Creating point cloud" << std::endl;
     // Create a point cloud containing a single plain 
     pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>);
 
@@ -96,20 +115,21 @@ int main(int argc, char **argv) {
     {
       cloud->points[i].x = 1024 * rand () / (RAND_MAX + 1.0f);
       cloud->points[i].y = 1024 * rand () / (RAND_MAX + 1.0f);
-      cloud->points[i].z = 1.0;
-      cloud->points[i].r = 255;
-      cloud->points[i].g = 255;
-      cloud->points[i].b = 50;
+      cloud->points[i].z = 1.0 + rand() / (RAND_MAX/0.3);
+      //cloud->points[i].r = 255;
+      //cloud->points[i].g = 255;
+      //cloud->points[i].b = 50;
     }
     for (size_t i = cloud->points.size()/2; i < cloud->points.size(); ++i)
     {
       cloud->points[i].x = 1.0;
       cloud->points[i].y = 1024 * rand () / (RAND_MAX + 1.0f);
       cloud->points[i].z = 1024 * rand () / (RAND_MAX + 1.0f);
-      cloud->points[i].r = 255;
-      cloud->points[i].g = 50;
-      cloud->points[i].b = 50;
+      //cloud->points[i].r = 255;
+      //cloud->points[i].g = 50;
+      //cloud->points[i].b = 50;
     }
+    std::cout << "Point cloud created" << std::endl;
 
     pcl::io::savePCDFileASCII ("compressed_plane.pcd", *cloud);
     compressor.cloudCompress(cloud);
