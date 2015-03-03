@@ -103,8 +103,7 @@ public:
         for (int j = 0; j < hulls.size(); j++){
             *cloud_hull_plane += *(hulls[j]); 
         }
-        pcl::io::savePCDFileASCII ("compressed_hulls_planes.pcd", *cloud_hull_plane);
-        
+        pcl::io::savePCDFileASCII ("compressed_hulls_planes.pcd", *cloud_hull_plane);  
     }
 
     private:
@@ -121,11 +120,11 @@ int main(int argc, char **argv) {
 
     std::cout << "Creating point cloud" << std::endl;
     // Create a point cloud containing a single plain 
-
     std::vector<int> filenames;
     filenames = pcl::console::parse_file_extension_argument (argc, argv, ".pcd");
     pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>);
-    if (pcl::io::loadPCDFile (argv[filenames[0]], *cloud) < 0)  {
+
+//    if (pcl::io::loadPCDFile (argv[filenames[0]], *cloud) < 0)  {
         std::cout << "Error loading point cloud " << std::endl;
         // Fill in the cloud data
         cloud->width  = 200000;
@@ -152,13 +151,14 @@ int main(int argc, char **argv) {
           //cloud->points[i].g = 50;
           //cloud->points[i].b = 50;
         }
-    }
+//    }
+
     std::cout << "Point cloud created" << std::endl;
 
-    pcl::io::savePCDFileASCII ("compressed_plane.pcd", *cloud);
+//    pcl::io::savePCDFileASCII ("compressed_plane.pcd", *cloud);
     compressor.cloudCompress(cloud);
-    pcl::io::savePCDFileASCII ("compressed_voxel_plane.pcd", *cloud);
-    
+//    pcl::io::savePCDFileASCII ("compressed_voxel_plane.pcd", *cloud);
+
     return 0;
 }
 

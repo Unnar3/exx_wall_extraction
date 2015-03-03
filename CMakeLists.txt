@@ -1,11 +1,8 @@
-set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
-
 cmake_minimum_required(VERSION 2.8.3)
 project(exx_plane_extraction)
 
 find_package(catkin REQUIRED COMPONENTS
   	sensor_msgs
-	cv_bridge
 	roscpp
 	std_msgs
 	image_transport

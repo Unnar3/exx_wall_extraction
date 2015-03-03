@@ -26,7 +26,7 @@ class compressMethods
     // to make computations easier.
     void voxelGridCloud(pcl::PointCloud<PointT>::Ptr cloud, float leaf_size)
     {
-        pcl::PointCloud <PointT>::Ptr cloud_voxel (new pcl::PointCloud <PointT>);
+        pcl::PointCloud <PointT>::Ptr cloud_voxel (new pcl::PointCloud <PointT> ()); 
         pcl::VoxelGrid<PointT> sor;
         sor.setInputCloud (cloud);
         sor.setLeafSize (leaf_size, leaf_size, leaf_size);
