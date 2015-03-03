@@ -12,6 +12,7 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/surface/concave_hull.h>
+#include <pcl/common/transforms.h>
 
 #include <vector>
 
@@ -25,10 +26,12 @@ class compressMethods
     // to make computations easier.
     void voxelGridCloud(pcl::PointCloud<PointT>::Ptr cloud, float leaf_size)
     {
+        pcl::PointCloud <PointT>::Ptr cloud_voxel (new pcl::PointCloud <PointT>);
         pcl::VoxelGrid<PointT> sor;
         sor.setInputCloud (cloud);
         sor.setLeafSize (leaf_size, leaf_size, leaf_size);
-        sor.filter (*cloud);
+        sor.filter (*cloud_voxel);
+        *cloud = *cloud_voxel;
     }
 
 
@@ -46,7 +49,7 @@ class compressMethods
         seg.setDistanceThreshold (0.02);
 
         int i=0, nr_points = (int) cloud->points.size ();
-        while (cloud->points.size() > 0.3 * nr_points)
+        while (i < 100 && cloud->points.size() > 0 && cloud->points.size() > 0.1 * nr_points)
         {
             // Define for each plane we find
             pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
@@ -59,6 +62,10 @@ class compressMethods
             {
                 std::cout << "Could not estimate a planar model for the given dataset." << std::endl;
                 break;
+            }
+            if(inliers->indices.size() < 200){
+                i++;
+                continue;
             }
 
             // Extract the planar inliers from the input cloud
@@ -77,6 +84,7 @@ class compressMethods
 
             (*coeffs).push_back(coefficients);
             (*planes).push_back(cloud_plane);
+            i++;
         }
     }
 
@@ -122,12 +130,32 @@ class compressMethods
         for (int i = 0; i < n; i++){ 
             pcl::PointCloud<PointT>::Ptr cloud_hull (new pcl::PointCloud<PointT> ());
             chull.setInputCloud ( (*planes)[i] );
-            chull.setAlpha (0.1);
+            chull.setAlpha (0.05);
             chull.reconstruct (*cloud_hull);
             (*hulls).push_back(cloud_hull);
             std::cout << "plane count: " << (*planes)[i]->points.size() << std::endl;
             std::cout << "hull count: " << cloud_hull->points.size() << std::endl;
         }
+    }
+
+    void rotatePointCloud(pcl::PointCloud<PointT>::Ptr inputCloud, pcl::PointCloud<PointT>::Ptr outputCloud, std::vector<float> theta)
+    {
+        if ( theta.size() != 3 ){
+            std::cout << "transform vector of wrong size, nothing to be done." << std::endl;
+            outputCloud = inputCloud;
+            return;
+        }
+
+        // Create rotation matrix.
+        Eigen::Affine3f transform = Eigen::Affine3f::Identity();
+        transform.rotate (Eigen::AngleAxisf (theta[0], Eigen::Vector3f::UnitX()));
+        transform.rotate (Eigen::AngleAxisf (theta[1], Eigen::Vector3f::UnitY()));
+        transform.rotate (Eigen::AngleAxisf (theta[2], Eigen::Vector3f::UnitZ()));
+
+        std::cout << "about to rotate" << std::endl;
+        // Transform the cloud and return it
+        pcl::transformPointCloud (*inputCloud, *outputCloud, transform);
+        std::cout << "rotated" << std::endl;
     }
 
 

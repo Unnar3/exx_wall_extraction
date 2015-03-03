@@ -76,7 +76,9 @@ public:
 
         ros::Time begin = ros::Time::now();
         voxelGrid(cloud);
-        
+        std::cout << "Cloud filtering successful." << std::endl;
+        std::cerr << "has " << cloud->points.size () << " number of data points." << std::endl;
+
         pcl::PointCloud <PointT>::Ptr cloud_plane (new pcl::PointCloud <PointT>);
         removePlanes(cloud, cloud_plane);
 
@@ -151,6 +153,8 @@ private:
                 i++;
                 continue;
             }
+            std::cout << "Found a plane" << std::endl;
+
             // Extract the planar inliers from the input cloud
             extract.setInputCloud (cloud_seg);
             extract.setIndices (inliers);
@@ -183,11 +187,11 @@ private:
             // Create a Concave Hull representation of the projected inliers
             pcl::PointCloud <PointT>::Ptr cloud_plane_hull (new pcl::PointCloud <PointT>);
             pcl::ConcaveHull<PointT> chull;
-            chull.setInputCloud (cloud_voxel);
+            
+            chull.setInputCloud (cloud_plane_tmp);
             chull.setAlpha (0.1);
             chull.reconstruct (*cloud_plane_hull);
-
-             
+            std::cout << "hull point count: " << cloud_plane_hull->points.size() << std::endl; 
             *cloud_p += *cloud_plane_hull;
             //*cloud_p += *cloud_voxel;
 
