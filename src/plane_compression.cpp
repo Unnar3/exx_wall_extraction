@@ -40,7 +40,7 @@
 #define BUFFER_SIZE         1
 #define NODE_NAME           "plane_compression_node"
 
-typedef pcl::PointXYZ PointT;
+typedef pcl::PointXYZRGB PointT;
 
 class PlaneCompression : public compressMethods
 {
@@ -103,7 +103,22 @@ public:
         for (int j = 0; j < hulls.size(); j++){
             *cloud_hull_plane += *(hulls[j]); 
         }
+
+        for (int j = 0; j < 10; j++){
+            std::cout << "X: " << cloud_hull_plane->points[j].x;
+            std::cout << ", Y: " << cloud_hull_plane->points[j].y;
+            std::cout << ", Z: " << cloud_hull_plane->points[j].z << std::endl;
+        }
+
         pcl::io::savePCDFileASCII ("compressed_hulls_planes.pcd", *cloud_hull_plane);  
+
+
+        reumannWitkamLineSimplification(&hulls);
+        pcl::PointCloud<PointT>::Ptr cloud_simplified_hull_plane (new pcl::PointCloud<PointT> ());
+        for (int j = 0; j < hulls.size(); j++){
+            *cloud_simplified_hull_plane += *(hulls[j]); 
+        }
+        pcl::io::savePCDFileASCII ("compressed_simplified_hulls_planes.pcd", *cloud_simplified_hull_plane); 
     }
 
     private:
@@ -138,26 +153,26 @@ int main(int argc, char **argv) {
           cloud->points[i].x = 1024 * rand () / (RAND_MAX + 1.0f);
           cloud->points[i].y = 1024 * rand () / (RAND_MAX + 1.0f);
           cloud->points[i].z = 1.0;
-          //cloud->points[i].r = 255;
-          //cloud->points[i].g = 255;
-          //cloud->points[i].b = 50;
+          cloud->points[i].r = 255;
+          cloud->points[i].g = 255;
+          cloud->points[i].b = 50;
         }
         for (size_t i = cloud->points.size()/2; i < cloud->points.size(); ++i)
         {
           cloud->points[i].x = 1.0;
           cloud->points[i].y = 1024 * rand () / (RAND_MAX + 1.0f);
           cloud->points[i].z = 1024 * rand () / (RAND_MAX + 1.0f);
-          //cloud->points[i].r = 255;
-          //cloud->points[i].g = 50;
-          //cloud->points[i].b = 50;
+          cloud->points[i].r = 255;
+          cloud->points[i].g = 50;
+          cloud->points[i].b = 50;
         }
 //    }
 
     std::cout << "Point cloud created" << std::endl;
 
-//    pcl::io::savePCDFileASCII ("compressed_plane.pcd", *cloud);
+    pcl::io::savePCDFileASCII ("compressed_plane.pcd", *cloud);
     compressor.cloudCompress(cloud);
-//    pcl::io::savePCDFileASCII ("compressed_voxel_plane.pcd", *cloud);
+    //pcl::io::savePCDFileASCII ("compressed_voxel_plane.pcd", *cloud);
 
     return 0;
 }

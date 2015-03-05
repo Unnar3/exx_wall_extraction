@@ -15,8 +15,9 @@
 #include <pcl/common/transforms.h>
 
 #include <vector>
+#include <math.h>
 
-typedef pcl::PointXYZ PointT;
+typedef pcl::PointXYZRGB PointT;
 
 class compressMethods
 {
@@ -96,8 +97,8 @@ class compressMethods
     //          exactly on one plane.
     void projectToPlane(std::vector<pcl::PointCloud<PointT>::Ptr > *planes, std::vector<pcl::ModelCoefficients::Ptr > *coeffs)
     {
-        int n = planes->size();
-        if(n == 0){
+        int number_of_planes = planes->size();
+        if(number_of_planes == 0){
             std::cout << "No planes, nothing to do" << std::endl;
             return;
         }
@@ -105,7 +106,7 @@ class compressMethods
         pcl::ProjectInliers<PointT> proj;
         proj.setModelType (pcl::SACMODEL_PLANE);
 
-        for (int i = 0; i < n; i++){ 
+        for (int i = 0; i < number_of_planes; i++){ 
             proj.setInputCloud ( (*planes)[i] );
             proj.setModelCoefficients ( (*coeffs)[i]);
             proj.filter ( *(*planes)[i] );
@@ -119,18 +120,19 @@ class compressMethods
     //          of a single plane  
     void planeToConcaveHull(std::vector<pcl::PointCloud<PointT>::Ptr > *planes, std::vector<pcl::PointCloud<PointT>::Ptr > *hulls){
 
-        int n = planes->size();
-        if(n == 0){
+        int number_of_planes = planes->size();
+        if(number_of_planes == 0){
             std::cout << "No planes, nothing to do" << std::endl;
             return;
         }
 
         // Create a Concave Hull representation of the projected inliers
         pcl::ConcaveHull<PointT> chull;
-        for (int i = 0; i < n; i++){ 
+        for (int i = 0; i < number_of_planes; i++){ 
             pcl::PointCloud<PointT>::Ptr cloud_hull (new pcl::PointCloud<PointT> ());
             chull.setInputCloud ( (*planes)[i] );
             chull.setAlpha (0.05);
+            chull.setKeepInformation (true);
             chull.reconstruct (*cloud_hull);
             (*hulls).push_back(cloud_hull);
             std::cout << "plane count: " << (*planes)[i]->points.size() << std::endl;
@@ -156,6 +158,93 @@ class compressMethods
         // Transform the cloud and return it
         pcl::transformPointCloud (*inputCloud, *outputCloud, transform);
         std::cout << "rotated" << std::endl;
+    }
+
+    double pointToLineDistance(PointT current, PointT next, PointT nextCheck)
+    {
+        std::vector<float> x0x1;
+        x0x1.push_back(nextCheck.x-current.x);
+        x0x1.push_back(nextCheck.y-current.y);
+        x0x1.push_back(nextCheck.z-current.z);
+        
+        std::vector<float> x0x2;
+        x0x2.push_back(nextCheck.x-next.x);
+        x0x2.push_back(nextCheck.y-next.y);
+        x0x2.push_back(nextCheck.z-next.z);
+        
+        std::vector<float> x1x2; 
+        x1x2.push_back(current.x-next.x);
+        x1x2.push_back(current.y-next.y);
+        x1x2.push_back(current.z-next.z);  
+        
+        std::vector<float> cross; 
+        cross.push_back(x0x1[1]*x0x2[2] - x0x1[2]*x0x2[1]);
+        cross.push_back(x0x1[2]*x0x2[0] - x0x1[0]*x0x2[2]);
+        cross.push_back(x0x1[0]*x0x2[1] - x0x1[1]*x0x2[0]);
+        
+        return sqrt(cross[0]*cross[0] + cross[1]*cross[1] + cross[2]*cross[2]) / sqrt(x1x2[0]*x1x2[0] + x1x2[1]*x1x2[1] + x1x2[2]*x1x2[2]);
+    }
+
+
+    // Simplifies the concave hull using the Reumann-Witkam algorithm
+    // Input : Vector of clouds where each cloud represents the concave hull of a plane,
+    // Output: Vector of clouds where each cloud represents the simplified concave hull of a plane,
+    void reumannWitkamLineSimplification(std::vector<pcl::PointCloud<PointT>::Ptr > *hulls)
+    {
+        int number_of_planes = hulls->size();
+        if(number_of_planes == 0){
+            std::cout << "No planes, nothing to do" << std::endl;
+            return;
+        }
+
+        double eps = 0.02;
+        bool pointsLeft = true;
+        double distToLine;
+        int numberOfPointsInPlane;
+        int j_current, j_next, j_nextCheck, j_last;
+        PointT current, next, last, nextCheck;
+        pcl::PointCloud<PointT>::Ptr currentPlane;
+
+        pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
+        pcl::ExtractIndices<PointT> extract;
+        
+        // Loop through all planes
+        for (int i = 0; i < number_of_planes; i++){
+            currentPlane = (*hulls)[i];
+            numberOfPointsInPlane = currentPlane->points.size();
+            j_current = 0;
+            j_next = j_current + 1;
+            j_last = j_next;
+            j_nextCheck = j_next + 1;
+            inliers->indices.clear();
+            
+            // Loop through all points in the plane and remove redundant points.
+            while(j_nextCheck < numberOfPointsInPlane){
+                current = currentPlane->points[j_current];
+                next = currentPlane->points[j_next];
+                last = currentPlane->points[j_last];
+                nextCheck = currentPlane->points[j_nextCheck];
+                distToLine = pointToLineDistance(current, next, nextCheck);
+                if ( distToLine < eps ){
+                    // remove 
+                    if ( j_next != j_last ){
+                        inliers->indices.push_back(j_last);
+                    }
+                    j_last++; 
+                    j_nextCheck++;
+                } else {
+                    inliers->indices.push_back(j_next);
+                    j_current = j_nextCheck;
+                    j_next = j_current + 1; 
+                    j_last = j_next;
+                    j_nextCheck = j_next + 1;
+                }
+            }
+            extract.setInputCloud (currentPlane);
+            extract.setIndices (inliers);
+            extract.setNegative (true);
+            extract.filter (*currentPlane);
+        }
     }
 
 
