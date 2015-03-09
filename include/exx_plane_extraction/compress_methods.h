@@ -11,13 +11,19 @@
 #include <pcl/filters/project_inliers.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/segmentation/extract_clusters.h>
+#include <pcl/segmentation/supervoxel_clustering.h>
 #include <pcl/surface/concave_hull.h>
+#include <pcl/surface/gp3.h>
 #include <pcl/common/transforms.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/features/normal_3d.h>
+
 
 #include <vector>
 #include <math.h>
 
 typedef pcl::PointXYZRGB PointT;
+typedef pcl::PointCloud<PointT> PointCloudT;
 
 class compressMethods
 {
@@ -160,6 +166,10 @@ class compressMethods
         std::cout << "rotated" << std::endl;
     }
 
+    // Calculates the distance from a point in 3D to a line.
+    // input:   PointT points, current and next define a line and nextCheck is a point where we want to know 
+    //          the distance to the line.
+    // output:  Double that defines the distance to the line in meters.
     double pointToLineDistance(PointT current, PointT next, PointT nextCheck)
     {
         std::vector<float> x0x1;
@@ -198,7 +208,6 @@ class compressMethods
         }
 
         double eps = 0.02;
-        bool pointsLeft = true;
         double distToLine;
         int numberOfPointsInPlane;
         int j_current, j_next, j_nextCheck, j_last;
@@ -212,13 +221,14 @@ class compressMethods
         for (int i = 0; i < number_of_planes; i++){
             currentPlane = (*hulls)[i];
             numberOfPointsInPlane = currentPlane->points.size();
+            
             j_current = 0;
             j_next = j_current + 1;
             j_last = j_next;
             j_nextCheck = j_next + 1;
             inliers->indices.clear();
             
-            // Loop through all points in the plane and remove redundant points.
+            // Loop through all points in the plane and find redundant points.
             while(j_nextCheck < numberOfPointsInPlane){
                 current = currentPlane->points[j_current];
                 next = currentPlane->points[j_next];
@@ -226,7 +236,6 @@ class compressMethods
                 nextCheck = currentPlane->points[j_nextCheck];
                 distToLine = pointToLineDistance(current, next, nextCheck);
                 if ( distToLine < eps ){
-                    // remove 
                     if ( j_next != j_last ){
                         inliers->indices.push_back(j_last);
                     }
@@ -240,12 +249,120 @@ class compressMethods
                     j_nextCheck = j_next + 1;
                 }
             }
+            // Remove the redundant points.
             extract.setInputCloud (currentPlane);
             extract.setIndices (inliers);
             extract.setNegative (true);
             extract.filter (*currentPlane);
         }
     }
+
+    std::vector<PointCloudT::Ptr > superVoxelClustering(std::vector<PointCloudT::Ptr > *planes)
+    {
+        std::vector<PointCloudT::Ptr > super_voxel_planes;
+        
+        int number_of_planes = planes->size();
+        if(number_of_planes == 0){
+            std::cout << "No planes, nothing to do" << std::endl;
+            return super_voxel_planes;
+        }
+
+        bool use_transform = false;
+        float voxel_resolution = 0.2f;
+        float seed_resolution = 0.2f;
+        float color_importance = 0.5f;
+        float spatial_importance = 0.4f;
+        float normal_importance = 0.1f;
+
+        
+        // super.setNormalImportance (normal_importance);
+
+        for (int i = 0; i <  number_of_planes; i++)
+        {
+            pcl::SupervoxelClustering<PointT> super (voxel_resolution, seed_resolution, use_transform);
+            super.setColorImportance (color_importance);
+            super.setSpatialImportance (spatial_importance);
+            PointCloudT::Ptr currentPlane = (*planes)[i];
+            super.setInputCloud (currentPlane);
+            std::map <uint32_t, pcl::Supervoxel<PointT>::Ptr > supervoxel_clusters;
+            super.extract (supervoxel_clusters);
+
+            super_voxel_planes.push_back(super.getVoxelCentroidCloud ());
+        }
+
+        return super_voxel_planes;
+    }
+
+    std::vector<pcl::PolygonMesh> greedyProjectionTriangulation(std::vector<PointCloudT::Ptr > *planes)
+    {
+        pcl::PolygonMesh triangle;
+        std::vector<pcl::PolygonMesh> triangles;
+        
+        int number_of_planes = planes->size();
+        if(number_of_planes == 0){
+            std::cout << "No planes, nothing to do" << std::endl;
+            return triangles;
+        }
+
+        // Normal estimation*
+        pcl::NormalEstimation<PointT, pcl::Normal> n;
+        pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
+        pcl::search::KdTree<PointT>::Ptr tree (new pcl::search::KdTree<PointT>);
+        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cloud_with_normals (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+        pcl::search::KdTree<pcl::PointXYZRGBNormal>::Ptr tree2 (new pcl::search::KdTree<pcl::PointXYZRGBNormal>);
+
+        // Initialize objects
+        pcl::GreedyProjectionTriangulation<pcl::PointXYZRGBNormal> gp3;
+
+        // Set the maximum distance between connected points (maximum edge length)
+        gp3.setSearchRadius (1.0);
+
+        // Set typical values for the parameters
+        gp3.setMu (2.5);
+        gp3.setMaximumNearestNeighbors (100);
+        gp3.setMaximumSurfaceAngle(M_PI/4); // 45 degrees
+        gp3.setMinimumAngle(M_PI/10); // 10 degrees
+        gp3.setMaximumAngle(2*M_PI/3); // 120 degrees
+        gp3.setNormalConsistency(false);
+
+        pcl::PolygonMesh triangles_planes;
+        pcl::PointCloud<PointT>::Ptr cloud (new pcl::PointCloud<PointT> ());
+        for (int i = 0; i <  number_of_planes; i++)
+        {
+            *cloud = *(*planes)[i];
+
+            tree->setInputCloud (cloud);
+            n.setInputCloud (cloud);
+            n.setSearchMethod (tree);
+            n.setKSearch (20);
+            n.compute (*normals);
+
+            // Concatenate the XYZ and normal fields*
+            pcl::concatenateFields (*cloud, *normals, *cloud_with_normals);
+
+            tree2->setInputCloud (cloud_with_normals);
+
+            // Get result
+            gp3.setInputCloud (cloud_with_normals);
+            gp3.setSearchMethod (tree2);
+            gp3.reconstruct (triangle);
+            triangles.push_back(triangle);
+        }   
+
+        return triangles;
+    }
+
+
+
+    pcl::PolygonMesh meshAppend(pcl::PolygonMesh a, pcl::PolygonMesh b)
+    {
+        pcl::PolygonMesh c;
+        //concatenateFields(a.cloud, b.cloud, c.cloud); 
+        a.polygons.insert(a.polygons.end(), b.polygons.begin(), b.polygons.end());
+        return a;
+    }
+
+
 
 
     private:

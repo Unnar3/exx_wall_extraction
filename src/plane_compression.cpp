@@ -16,6 +16,8 @@
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/filters/project_inliers.h>
 #include <pcl/surface/concave_hull.h>
+#include <pcl/geometry/planar_polygon.h>
+#include <pcl/visualization/pcl_visualizer.h>
 //#include <pcl/features/moment_of_inertia_estimation.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/ModelCoefficients.h>
@@ -28,6 +30,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/foreach.hpp>
+#include <boost/thread/thread.hpp>
 #include <cstdlib>
 #include <vector>
 #include <cmath>
@@ -39,8 +42,10 @@
 #define HZ                  10
 #define BUFFER_SIZE         1
 #define NODE_NAME           "plane_compression_node"
+const std::string METAROOM = "/home/unnar/catkin_ws/src/Metarooms/room_0/";
 
 typedef pcl::PointXYZRGB PointT;
+typedef pcl::PointCloud<PointT> PointCloudT;
 
 class PlaneCompression : public compressMethods
 {
@@ -61,67 +66,79 @@ public:
         std::cout << "Point cloud size AFTER voxel grid filtering:" << std::endl;
         std::cout <<  cloud->points.size () << " points." << std::endl;
 
-        /*
-        pcl::PointCloud<PointT>::Ptr cloud_rotated (new pcl::PointCloud<pcl::PointXYZ> ());
-        std::vector<float> rotate(3);
-        rotate[0] = 0.0;
-        rotate[1] = 0.0;
-        rotate[2] = 0.1;
-        //rotate the pointcloud a bit.
-        rotatePointCloud(cloud, cloud_rotated, rotate);
-
-        pcl::io::savePCDFileASCII ("compressed_rotated_planes.pcd", *cloud_rotated);
-        */
-
         // Extract planes
         std::vector<pcl::PointCloud<PointT>::Ptr > planes; 
         std::vector<pcl::ModelCoefficients::Ptr > coeffs;
         removePlanes(cloud, &planes, &coeffs);
         std::cout << "Number of planes: " << int(planes.size()) << std::endl;
-        std::cout << "Number of coefficients: " << int(coeffs.size()) << std::endl;
-
-
-        pcl::PointCloud<PointT>::Ptr cloud_plane (new pcl::PointCloud<PointT> ());
-        for (int j = 0; j < planes.size(); j++){
-            *cloud_plane += *(planes[j]); 
-        }
-        pcl::io::savePCDFileASCII ("compressed_extracted_planes.pcd", *cloud_plane);
-
+        savePCL("compressed_extracted_planes", planes);
 
         // Project points to the planes
         projectToPlane(&planes, &coeffs);
-        pcl::PointCloud<PointT>::Ptr cloud_projected_plane (new pcl::PointCloud<PointT> ());
-        for (int j = 0; j < planes.size(); j++){
-            *cloud_projected_plane += *(planes[j]); 
-        }
-        pcl::io::savePCDFileASCII ("compressed_extracted_projected_planes.pcd", *cloud_projected_plane);
+        savePCL("compressed_extracted_projected_planes", planes);
 
         // calculate concave hull
-        std::vector<pcl::PointCloud<PointT>::Ptr > hulls; 
-        planeToConcaveHull(&planes, &hulls);
-        pcl::PointCloud<PointT>::Ptr cloud_hull_plane (new pcl::PointCloud<PointT> ());
-        for (int j = 0; j < hulls.size(); j++){
-            *cloud_hull_plane += *(hulls[j]); 
+        std::vector<PointCloudT::Ptr > hulls; 
+        planeToConcaveHull(&planes, &hulls);  
+        savePCL("compressed_hulls_planes", hulls);
+
+        pcl::PlanarPolygon<PointT> planar_poly;
+        planar_poly.setContour(*(hulls[0]));
+
+        pcl::PlanarPolygon<PointT> planar_poly2;
+        planar_poly2.setContour(*(hulls[1]));
+
+        // Simplify the concave hull.
+        reumannWitkamLineSimplification(&hulls); 
+        savePCL("compressed_simplified_hulls_planes", hulls);
+
+        
+
+        boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+        pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_test;
+        viewer->setBackgroundColor (0, 0, 0);
+        viewer->addPointCloud(cloud, "samplecloud");
+        viewer->addPolygon(planar_poly, 255.0, 255.0, 50.0, "polygon1", 0);
+        viewer->addPolygon(planar_poly2, 255.0, 50.0, 50.0, "polygon2", 0);
+        while (!viewer->wasStopped ())
+        {
+            viewer->spinOnce (100);
         }
 
-        for (int j = 0; j < 10; j++){
-            std::cout << "X: " << cloud_hull_plane->points[j].x;
-            std::cout << ", Y: " << cloud_hull_plane->points[j].y;
-            std::cout << ", Z: " << cloud_hull_plane->points[j].z << std::endl;
-        }
+        // Create supervoxels from the cloud
+        std::vector<PointCloudT::Ptr > super_voxel_planes = superVoxelClustering(&planes);
+        savePCL("compressed_voxel_planes", hulls);
 
-        pcl::io::savePCDFileASCII ("compressed_hulls_planes.pcd", *cloud_hull_plane);  
+        std::vector<pcl::PolygonMesh> triangles;
+        triangles = greedyProjectionTriangulation(&super_voxel_planes);
 
-
-        reumannWitkamLineSimplification(&hulls);
-        pcl::PointCloud<PointT>::Ptr cloud_simplified_hull_plane (new pcl::PointCloud<PointT> ());
-        for (int j = 0; j < hulls.size(); j++){
-            *cloud_simplified_hull_plane += *(hulls[j]); 
-        }
-        pcl::io::savePCDFileASCII ("compressed_simplified_hulls_planes.pcd", *cloud_simplified_hull_plane); 
+        // pcl::io::saveVTKFile ("mesh.vtk", triangles[1]);
+        saveVTK("mesh", triangles[1]);
     }
 
     private:
+    void savePCL(const std::string filename, std::vector<PointCloudT::Ptr > clouds)
+    {
+        if (clouds.size() == 0){
+            std::cout << "no data to save (savePCL)" << std::endl; 
+        }
+
+        PointCloudT::Ptr cloud_tmp (new PointCloudT ());
+        for (int j = 0; j < clouds.size(); j++){
+            *cloud_tmp += *clouds[j];
+        }
+        pcl::io::savePCDFileASCII (filename + ".pcd", *cloud_tmp);
+    }
+
+    void savePCL(const std::string filename, PointCloudT::Ptr cloud)
+    {
+        pcl::io::savePCDFileASCII (filename + ".pcd", *cloud);
+    }
+
+    void saveVTK(const std::string filename, pcl::PolygonMesh poly)
+    {
+        pcl::io::saveVTKFile (filename + ".vtk", poly);
+    }
 };
 
 int main(int argc, char **argv) {
@@ -139,8 +156,19 @@ int main(int argc, char **argv) {
     filenames = pcl::console::parse_file_extension_argument (argc, argv, ".pcd");
     pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>);
 
-//    if (pcl::io::loadPCDFile (argv[filenames[0]], *cloud) < 0)  {
+    bool cloudLoaded = true;
+    std::string filename = METAROOM;
+    if (filenames.size() != 0){
+        filename += argv[filenames[0]];
+    }
+    std::cout << "input: " << filename << std::endl;
+    if (filenames.size() > 0 && pcl::io::loadPCDFile (filename, *cloud) < 0)  {
         std::cout << "Error loading point cloud " << std::endl;
+        cloudLoaded = false;
+    }
+    if (cloudLoaded == false || filenames.size() == 0){
+
+        std::cout << "Creating simulated data" << std::endl;
         // Fill in the cloud data
         cloud->width  = 200000;
         cloud->height = 1;
@@ -166,7 +194,7 @@ int main(int argc, char **argv) {
           cloud->points[i].g = 50;
           cloud->points[i].b = 50;
         }
-//    }
+    }
 
     std::cout << "Point cloud created" << std::endl;
 
