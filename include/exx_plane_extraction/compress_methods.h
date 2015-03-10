@@ -295,7 +295,7 @@ class compressMethods
 
     std::vector<pcl::PolygonMesh> greedyProjectionTriangulation(std::vector<PointCloudT::Ptr > *planes)
     {
-        pcl::PolygonMesh triangle;
+        pcl::PolygonMesh mesh;
         std::vector<pcl::PolygonMesh> triangles;
         
         int number_of_planes = planes->size();
@@ -303,6 +303,17 @@ class compressMethods
             std::cout << "No planes, nothing to do" << std::endl;
             return triangles;
         }
+
+        for (int i = 0; i < number_of_planes; i++){
+            triangles.push_back( greedyProjectionTriangulation( (*planes)[i] ) );
+        }
+
+        return triangles;
+    }
+
+    pcl::PolygonMesh greedyProjectionTriangulation(PointCloudT::Ptr plane)
+    {
+        pcl::PolygonMesh triangle;
 
         // Normal estimation*
         pcl::NormalEstimation<PointT, pcl::Normal> n;
@@ -315,41 +326,35 @@ class compressMethods
         pcl::GreedyProjectionTriangulation<pcl::PointXYZRGBNormal> gp3;
 
         // Set the maximum distance between connected points (maximum edge length)
-        gp3.setSearchRadius (1.0);
+        gp3.setSearchRadius (0.5);
 
         // Set typical values for the parameters
         gp3.setMu (2.5);
-        gp3.setMaximumNearestNeighbors (100);
+        gp3.setMaximumNearestNeighbors (300);
         gp3.setMaximumSurfaceAngle(M_PI/4); // 45 degrees
         gp3.setMinimumAngle(M_PI/10); // 10 degrees
         gp3.setMaximumAngle(2*M_PI/3); // 120 degrees
         gp3.setNormalConsistency(false);
 
         pcl::PolygonMesh triangles_planes;
-        pcl::PointCloud<PointT>::Ptr cloud (new pcl::PointCloud<PointT> ());
-        for (int i = 0; i <  number_of_planes; i++)
-        {
-            *cloud = *(*planes)[i];
 
-            tree->setInputCloud (cloud);
-            n.setInputCloud (cloud);
-            n.setSearchMethod (tree);
-            n.setKSearch (20);
-            n.compute (*normals);
+        tree->setInputCloud (plane);
+        n.setInputCloud (plane);
+        n.setSearchMethod (tree);
+        n.setKSearch (20);
+        n.compute (*normals);
 
-            // Concatenate the XYZ and normal fields*
-            pcl::concatenateFields (*cloud, *normals, *cloud_with_normals);
+        // Concatenate the XYZ and normal fields*
+        pcl::concatenateFields (*plane, *normals, *cloud_with_normals);
 
-            tree2->setInputCloud (cloud_with_normals);
+        tree2->setInputCloud (cloud_with_normals);
 
-            // Get result
-            gp3.setInputCloud (cloud_with_normals);
-            gp3.setSearchMethod (tree2);
-            gp3.reconstruct (triangle);
-            triangles.push_back(triangle);
-        }   
+        // Get result
+        gp3.setInputCloud (cloud_with_normals);
+        gp3.setSearchMethod (tree2);
+        gp3.reconstruct (triangle);
 
-        return triangles;
+        return triangle;
     }
 
 

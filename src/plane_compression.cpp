@@ -17,7 +17,7 @@
 #include <pcl/filters/project_inliers.h>
 #include <pcl/surface/concave_hull.h>
 #include <pcl/geometry/planar_polygon.h>
-#include <pcl/visualization/pcl_visualizer.h>
+//#include <pcl/visualization/pcl_visualizer.h>
 //#include <pcl/features/moment_of_inertia_estimation.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/ModelCoefficients.h>
@@ -82,38 +82,39 @@ public:
         planeToConcaveHull(&planes, &hulls);  
         savePCL("compressed_hulls_planes", hulls);
 
-        pcl::PlanarPolygon<PointT> planar_poly;
-        planar_poly.setContour(*(hulls[0]));
-
-        pcl::PlanarPolygon<PointT> planar_poly2;
-        planar_poly2.setContour(*(hulls[1]));
 
         // Simplify the concave hull.
-        reumannWitkamLineSimplification(&hulls); 
-        savePCL("compressed_simplified_hulls_planes", hulls);
+        // reumannWitkamLineSimplification(&hulls); 
+        // savePCL("compressed_simplified_hulls_planes", hulls);
 
-        
-
-        boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
-        pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_test;
-        viewer->setBackgroundColor (0, 0, 0);
-        viewer->addPointCloud(cloud, "samplecloud");
-        viewer->addPolygon(planar_poly, 255.0, 255.0, 50.0, "polygon1", 0);
-        viewer->addPolygon(planar_poly2, 255.0, 50.0, 50.0, "polygon2", 0);
-        while (!viewer->wasStopped ())
-        {
-            viewer->spinOnce (100);
-        }
+        // boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+        // pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_test;
+        // viewer->setBackgroundColor (0, 0, 0);
+        // viewer->addPointCloud(cloud, "samplecloud");
+        // viewer->addPolygon(planar_poly, 255.0, 255.0, 50.0, "polygon1", 0);
+        // viewer->addPolygon(planar_poly2, 255.0, 50.0, 50.0, "polygon2", 0);
+        // while (!viewer->wasStopped ())
+        // {
+        //     viewer->spinOnce (100);
+        // }
 
         // Create supervoxels from the cloud
         std::vector<PointCloudT::Ptr > super_voxel_planes = superVoxelClustering(&planes);
-        savePCL("compressed_voxel_planes", hulls);
+        savePCL("compressed_voxel_planes", super_voxel_planes);
 
-        std::vector<pcl::PolygonMesh> triangles;
-        triangles = greedyProjectionTriangulation(&super_voxel_planes);
+        
+        PointCloudT::Ptr cloud_triangle (new PointCloudT ());
+        for (int i = 0; i < super_voxel_planes.size(); i++)
+        {
+            *cloud_triangle += *super_voxel_planes[i];
+            *cloud_triangle += *hulls[i]; 
+        }
 
-        // pcl::io::saveVTKFile ("mesh.vtk", triangles[1]);
-        saveVTK("mesh", triangles[1]);
+        // std::vector<pcl::PolygonMesh> triangles;
+        savePCL("Cloud_triangle", cloud_triangle);
+        pcl::PolygonMesh triangles;
+        triangles = greedyProjectionTriangulation(cloud_triangle);
+        saveVTK("mesh", triangles);
     }
 
     private:
