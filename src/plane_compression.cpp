@@ -67,24 +67,25 @@ public:
         std::cout <<  cloud->points.size () << " points." << std::endl;
 
         // Extract planes
-        std::vector<pcl::PointCloud<PointT>::Ptr > planes; 
+        std::vector<pcl::PointCloud<PointT>::Ptr > planes;
         std::vector<pcl::ModelCoefficients::Ptr > coeffs;
         removePlanes(cloud, &planes, &coeffs);
         std::cout << "Number of planes: " << int(planes.size()) << std::endl;
         savePCL("compressed_extracted_planes", planes);
+        //test
 
         // Project points to the planes
         projectToPlane(&planes, &coeffs);
         savePCL("compressed_extracted_projected_planes", planes);
 
         // calculate concave hull
-        std::vector<PointCloudT::Ptr > hulls; 
-        planeToConcaveHull(&planes, &hulls);  
+        std::vector<PointCloudT::Ptr > hulls;
+        planeToConcaveHull(&planes, &hulls);
         savePCL("compressed_hulls_planes", hulls);
 
 
         // Simplify the concave hull.
-        // reumannWitkamLineSimplification(&hulls); 
+        // reumannWitkamLineSimplification(&hulls);
         // savePCL("compressed_simplified_hulls_planes", hulls);
 
         // boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
@@ -101,13 +102,11 @@ public:
         // Create supervoxels from the cloud
         std::vector<PointCloudT::Ptr > super_voxel_planes = superVoxelClustering(&planes);
         savePCL("compressed_voxel_planes", super_voxel_planes);
-
-        
         PointCloudT::Ptr cloud_triangle (new PointCloudT ());
         for (int i = 0; i < super_voxel_planes.size(); i++)
         {
             *cloud_triangle += *super_voxel_planes[i];
-            *cloud_triangle += *hulls[i]; 
+            *cloud_triangle += *hulls[i];
         }
 
         // std::vector<pcl::PolygonMesh> triangles;
@@ -121,7 +120,7 @@ public:
     void savePCL(const std::string filename, std::vector<PointCloudT::Ptr > clouds)
     {
         if (clouds.size() == 0){
-            std::cout << "no data to save (savePCL)" << std::endl; 
+            std::cout << "no data to save (savePCL)" << std::endl;
         }
 
         PointCloudT::Ptr cloud_tmp (new PointCloudT ());
@@ -149,10 +148,10 @@ int main(int argc, char **argv) {
     // Initialize the compressor class
     PlaneCompression compressor;
     ros::Rate loop_rate(HZ);
-  
+
 
     std::cout << "Creating point cloud" << std::endl;
-    // Create a point cloud containing a single plain 
+    // Create a point cloud containing a single plain
     std::vector<int> filenames;
     filenames = pcl::console::parse_file_extension_argument (argc, argv, ".pcd");
     pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>);
@@ -205,5 +204,3 @@ int main(int argc, char **argv) {
 
     return 0;
 }
-
-
