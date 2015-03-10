@@ -308,7 +308,7 @@ class compressMethods
             triangles.push_back( greedyProjectionTriangulation( (*planes)[i] ) );
         }
 
-        return triangles;
+        return triangles; 
     }
 
     pcl::PolygonMesh greedyProjectionTriangulation(PointCloudT::Ptr plane)
