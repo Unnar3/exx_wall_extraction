@@ -17,9 +17,6 @@
 #include <pcl/filters/project_inliers.h>
 #include <pcl/surface/concave_hull.h>
 #include <pcl/geometry/planar_polygon.h>
-//#include <pcl/visualization/pcl_visualizer.h>
-//#include <pcl/features/moment_of_inertia_estimation.h>
-#include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/ModelCoefficients.h>
 #include <pcl/common/transforms.h>
 #include <pcl/kdtree/kdtree_flann.h>
@@ -27,25 +24,27 @@
 #include <pcl/surface/gp3.h>
 #include <pcl/console/parse.h>
 // OTHER
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
-#include <boost/foreach.hpp>
 #include <boost/thread/thread.hpp>
-#include <cstdlib>
 #include <vector>
 #include <cmath>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
 #include <compression/compress_methods.h>
+#include <compression/cloud_filtering.h>
+#include <compression/plane_extraction.h>
+
+using namespace exx::compression;
 
 // DEFINITIONS
 #define HZ                  10
 #define BUFFER_SIZE         1
-#define NODE_NAME           "plane_compression_node"
+#define NODE_NAME           "plane_compression"
 const std::string METAROOM = "/home/unnar/catkin_ws/src/Metarooms/room_0/";
 
 typedef pcl::PointXYZRGB PointT;
+typedef pcl::PointNormal PointNT;
 typedef pcl::PointCloud<PointT> PointCloudT;
+typedef pcl::PointCloud<PointNT> PointNCloudT;
 
 class PlaneCompression : public compressMethods
 {
@@ -62,7 +61,7 @@ public:
     {
         std::cout << "Point cloud size BEFORE voxel grid filtering:" << std::endl;
         std::cout <<  cloud->points.size () << " points." << std::endl;
-        voxelGridCloud(cloud, 0.02);
+        cloudFiltering::voxelGridFiltering(cloud, 0.02);
         std::cout << "Point cloud size AFTER voxel grid filtering:" << std::endl;
         std::cout <<  cloud->points.size () << " points." << std::endl;
 

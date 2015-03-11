@@ -27,7 +27,7 @@ typedef pcl::PointCloud<PointNT> PointNCloudT;
 typedef pcl::ModelCoefficients ModelCoeffT;
 typedef pcl::PlanarRegion<PointT> PlanarRegT;
 using namespace std;
-using namespace exx;
+using namespace exx::compression;
 
 class PlaneTest
 {
