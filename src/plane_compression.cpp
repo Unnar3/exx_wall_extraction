@@ -36,7 +36,7 @@
 #include <cmath>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
-#include <exx_plane_extraction/compress_methods.h>
+#include <compression/compress_methods.h>
 
 // DEFINITIONS
 #define HZ                  10
@@ -72,7 +72,6 @@ public:
         removePlanes(cloud, &planes, &coeffs);
         std::cout << "Number of planes: " << int(planes.size()) << std::endl;
         savePCL("compressed_extracted_planes", planes);
-        //test
 
         // Project points to the planes
         projectToPlane(&planes, &coeffs);
@@ -85,8 +84,8 @@ public:
 
 
         // Simplify the concave hull.
-        // reumannWitkamLineSimplification(&hulls);
-        // savePCL("compressed_simplified_hulls_planes", hulls);
+        reumannWitkamLineSimplification(&hulls);
+        savePCL("compressed_simplified_hulls_planes", hulls);
 
         // boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
         // pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_test;
@@ -106,13 +105,14 @@ public:
         for (int i = 0; i < super_voxel_planes.size(); i++)
         {
             *cloud_triangle += *super_voxel_planes[i];
-            *cloud_triangle += *hulls[i];
+            //*cloud_triangle += *hulls[i];
+            //*super_voxel_planes[i] += *hulls[i]; 
         }
 
-        // std::vector<pcl::PolygonMesh> triangles;
+        //std::vector<pcl::PolygonMesh> triangles;
         savePCL("Cloud_triangle", cloud_triangle);
         pcl::PolygonMesh triangles;
-        triangles = greedyProjectionTriangulation(cloud_triangle);
+        triangles = greedyProjectionTriangulation(cloud_triangle);//&super_voxel_planes);
         saveVTK("mesh", triangles);
     }
 
