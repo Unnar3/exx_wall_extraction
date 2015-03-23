@@ -72,6 +72,22 @@ public:
 	// SET METHODS
 	void setVoxelLeafSize(float leaf){ v_leaf_size_ = leaf; }
 	void setSVVoxelResolution(float res){ sv_voxel_res_ = res; }
+	void setSVSeedResolution(float res){ sv_seed_res_ = res; }
+	void setSVColorImportance(float imp){ sv_color_imp_ = imp; }
+	void setSVSpatialImportance(float imp){ sv_spatial_imp_ = imp; }
+	void setRANSACMaxIteration(int ite){ max_ite_ = ite; }
+	void setRANSACMinInliers(int inl){ min_inliers_ = inl; }
+	void setRANSACDistanceThreshold(double thresh){ dist_thresh_ = thresh; }
+	void setHULLAlpha(double alpha){ hull_alpha_ = alpha; }
+	void setRWHUllEps(double eps){ rw_hull_eps_ = eps; }
+	void setGP3SearchRad(double rad){ gp3_search_rad_ = rad; }
+	void setGP3Mu(double mu){ gp3_Mu_ = mu; }
+	void setGP3MaxSurfaceAngle(double angle){ gp3_max_surface_angle_ = andgle; }
+	void setGP3MinAngle(double angle){ gp3_min_angle_ = angle; }
+	void setGP3MaxAngle(double angle){ gp3_max_angle_ = angle; }
+	void setGP3MaxNearestNeighbours(int K){ gp3_max_nearest_neighbours_ = K; }
+	void setGP3Ksearch(int K){ gp3_Ksearch_ = K; }
+
 
 	// RETURN METHODS
 	PointCloudT::Ptr returnCloud() { return cloud_; }
@@ -80,7 +96,7 @@ public:
 	std::vector<PointCloudT::Ptr > returnHulls() { return hulls_; }
 	std::vector<PointCloudT::Ptr > returnRWHulls() { return rw_hulls_; }
 	std::vector<pcl::PolygonMesh > returnMeshes() { return meshes_; }
-	pcl::PolygonMesh returnMesh() { return ""mesh_; }
+	pcl::PolygonMesh returnMesh() { return mesh_; }
 
 	// SAVE METHODS
 	void saveCloud(std::string name = "cmprs_cloud"){ savePCD(cloud_, name); }
