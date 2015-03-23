@@ -22,7 +22,7 @@ class compression{
 	// CONCAVE HULLS
 	double hull_alpha_, rw_hull_eps_;
 	// GREEDY PROJECTION TRIANGULATION
-	double gp3_search_rad_, gp3_Mu_, gp3_max_surface_angle_, gp3_min_angle_, gp3_max_angle;
+	double gp3_search_rad_, gp3_Mu_, gp3_max_surface_angle_, gp3_min_angle_, gp3_max_angle_;
 	int gp3_max_nearest_neighbours_, gp3_Ksearch_;
 
 	PointCloudT::Ptr cloud_;
@@ -41,13 +41,16 @@ public:
 		max_ite_(100), min_inliers_(200), dist_thresh_(0.04),
 		hull_alpha_(0.1), rw_hull_eps_(0.02),
 		gp3_search_rad_(0.03), gp3_Mu_(2.5), gp3_max_surface_angle_(M_PI/4),
-		gp3_min_angle_(M_PI/20),  gp3_max_angle(2*M_PI/2.5),
+		gp3_min_angle_(M_PI/20),  gp3_max_angle_(2*M_PI/2.5),
 		gp3_max_nearest_neighbours_(100), gp3_Ksearch_(20)
 	{ }
 	~compression(){ };
 
 
 	void setInputCloud(PointCloudT::Ptr inputCloud);
+
+	void triangulate();
+	void triangulatePlanes();
 	
 	// Filtering Methods 
 	void voxelGridFilter();
@@ -82,7 +85,7 @@ public:
 	void setRWHUllEps(double eps){ rw_hull_eps_ = eps; }
 	void setGP3SearchRad(double rad){ gp3_search_rad_ = rad; }
 	void setGP3Mu(double mu){ gp3_Mu_ = mu; }
-	void setGP3MaxSurfaceAngle(double angle){ gp3_max_surface_angle_ = andgle; }
+	void setGP3MaxSurfaceAngle(double angle){ gp3_max_surface_angle_ = angle; }
 	void setGP3MinAngle(double angle){ gp3_min_angle_ = angle; }
 	void setGP3MaxAngle(double angle){ gp3_max_angle_ = angle; }
 	void setGP3MaxNearestNeighbours(int K){ gp3_max_nearest_neighbours_ = K; }

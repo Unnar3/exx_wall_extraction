@@ -26,7 +26,7 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 
-add_executable(plane_test src/plane_test.cpp)
+add_executable(plane_test src/plane_test.cpp include/compression.cpp)
 target_link_libraries(plane_test ${catkin_LIBRARIES})
 add_executable(plane_compression src/plane_compression.cpp)
 target_link_libraries(plane_compression ${catkin_LIBRARIES} libvtkCommon.so libvtkFiltering.so libvtkGraphics.so)

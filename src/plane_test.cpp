@@ -12,6 +12,7 @@
 // OTHER
 #include <pcl/console/parse.h>
 #include <vector>
+#include <compression.h>
 
 
 // DEFINITIONS
@@ -63,6 +64,16 @@ public:
         std::cout << "found " << regions.size() << " planes using MPS." << std::endl;        
         */
     }
+    void testCompression()
+    {
+        PointCloudT::Ptr cloud (new PointCloudT ());
+        pcl::io::loadPCDFile ("/home/unnar/catkin_ws/src/Metarooms/room_0/complete_cloud.pcd", *cloud);
+        pcl::io::savePCDFileBinary ("input_cloud.pcd", *cloud);
+        EXX::compression cmprs;
+        cmprs.setInputCloud(cloud);
+        cmprs.triangulate();
+        cmprs.saveMesh();
+    }
 
 private:
     void voxelGridCloud(pcl::PointCloud<PointT>::Ptr cloud, float leaf_size)
@@ -84,22 +95,8 @@ int main(int argc, char **argv) {
     PlaneTest test;
     ros::Rate loop_rate(HZ);
 
-    std::cout << "Creating point cloud" << std::endl;
-    // Create a point cloud containing a single plain
-    std::vector<int> filenames;
-    filenames = pcl::console::parse_file_extension_argument (argc, argv, ".pcd");
-    pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>);
 
-    std::string filename = METAROOM;
-    if (filenames.size() != 0){
-        filename += argv[filenames[0]];
-    }
-    if (pcl::io::loadPCDFile (filename, *cloud) < 0)  {
-        std::cout << "Error loading point cloud " << std::endl;
-        return 0;
-    }
-
-    test.testPlanes(cloud);
+    test.testCompression();
 
     return 0;
 }
