@@ -1,0 +1,5 @@
+<launch>
+	<node pkg="exx_plane_extraction" type="plane_test" name="plane_test" output="screen">
+		<rosparam file="$(find exx_plane_extraction)/parameters/test_plane.yaml" command="load"/>
+	</node>
+</launch>

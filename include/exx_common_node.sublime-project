@@ -1,0 +1,9 @@
+{
+	"folders":
+	[
+		{
+			"follow_symlinks": true,
+			"path": "/home/unnar/catkin_ws/src/exx_common_node"
+		}
+	]
+}

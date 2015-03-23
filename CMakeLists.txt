@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
 	std_msgs
 	image_transport
 	message_generation
+	exx_common_node
 	pcl_conversions
   	pcl_ros
 )
@@ -21,7 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package(
 	DEPENDS
-	CATKIN_DEPENDS message_runtime
+	CATKIN_DEPENDS message_runtime exx_common_node
 )
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 

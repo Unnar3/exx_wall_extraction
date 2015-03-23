@@ -1,17 +1,13 @@
 #include "compression.h"
-#include <pcl/point_types.h>
-#include <pcl/point_cloud.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/project_inliers.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/ModelCoefficients.h>
 #include <pcl/segmentation/supervoxel_clustering.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/surface/concave_hull.h>
-#include <pcl/surface/gp3.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/vtk_io.h>
 

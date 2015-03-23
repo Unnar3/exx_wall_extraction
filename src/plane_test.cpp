@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <compression/plane_extraction.h>
+#include <exx_common_node/Node.h>
 // PCL specific includes
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
@@ -30,7 +31,7 @@ typedef pcl::PlanarRegion<PointT> PlanarRegT;
 using namespace std;
 using namespace exx::compression;
 
-class PlaneTest
+class PlaneTest// : public exx::Node
 {
 
     ros::NodeHandle nh;
@@ -45,34 +46,25 @@ public:
         nh = ros::NodeHandle("~");
     }
 
-    void testPlanes(PointCloudT::Ptr cloud)
-    {
-        std::cout << "testing that it works." << std::endl;
-
-        std::cout << cloud->width << "  " <<  cloud->height << std::endl; 
-
-        voxelGridCloud(cloud, 0.02);
- 
-        std::vector<PointCloudT::Ptr > planes; 
-        std::vector<ModelCoeffT::Ptr > coeffs;
-        planeExtraction::RANSACPlanes(cloud, &planes, &coeffs);
-        std::cout << "found " << planes.size() << " planes using RANSAC." << std::endl;
-
-        /* Need organized point cloud which we don't have;
-        std::vector<PlanarRegT, Eigen::aligned_allocator< PlanarRegT > > regions;
-        regions =  exx::planes::MPSPlanes(cloud);
-        std::cout << "found " << regions.size() << " planes using MPS." << std::endl;        
-        */
-    }
     void testCompression()
     {
+        int serial;
+        std::cout << "testing that it works." << std::endl;
+        nh.param<int>("serial", serial, 50);
+        std::string savePath;
+        nh.param<std::string>("savePath", savePath, "./");
+        // nh.getParam("serial", serial);
+
+        std::cout << "Parameter test: " << serial << std::endl;
+
         PointCloudT::Ptr cloud (new PointCloudT ());
-        pcl::io::loadPCDFile ("/home/unnar/catkin_ws/src/Metarooms/room_0/complete_cloud.pcd", *cloud);
-        pcl::io::savePCDFileBinary ("input_cloud.pcd", *cloud);
+        pcl::io::loadPCDFile ("/home/unnar/catkin_ws/src/Metarooms/room_2/complete_cloud.pcd", *cloud);
+        // pcl::io::savePCDFileBinary ("input_cloud.pcd", *cloud);
         EXX::compression cmprs;
         cmprs.setInputCloud(cloud);
         cmprs.triangulate();
-        cmprs.saveMesh();
+        cmprs.saveMesh(savePath);
+        std::cout << "Cloud should be saved." << std::endl;
     }
 
 private:

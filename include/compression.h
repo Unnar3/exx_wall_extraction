@@ -40,7 +40,7 @@ public:
 		sv_voxel_res_(0.1f), sv_seed_res_(0.3f), sv_color_imp_(0.5f), sv_spatial_imp_(0.1f),
 		max_ite_(100), min_inliers_(200), dist_thresh_(0.04),
 		hull_alpha_(0.1), rw_hull_eps_(0.02),
-		gp3_search_rad_(0.03), gp3_Mu_(2.5), gp3_max_surface_angle_(M_PI/4),
+		gp3_search_rad_(0.3), gp3_Mu_(3.0), gp3_max_surface_angle_(M_PI/4),
 		gp3_min_angle_(M_PI/20),  gp3_max_angle_(2*M_PI/2.5),
 		gp3_max_nearest_neighbours_(100), gp3_Ksearch_(20)
 	{ }
@@ -107,7 +107,7 @@ public:
 	void saveSVPlanes(std::string name = "cmprs_sv_cloud"){ savePCD(sv_planes_, name); }
 	void saveHulls(std::string name = "cmprs_hulls"){ savePCD(hulls_, name); }
 	void saveRWHulls(std::string name = "cmprs_rw_hulls"){ savePCD(rw_hulls_, name); }
-	void saveMesh(std::string name = "cmprs_mesh"){ saveVTK(mesh_ , name); }
+	void saveMesh(std::string path="./", std::string name="cmprs_mesh"){ saveVTK(mesh_, path+name); }
 private:
 
 	PointCloudT::Ptr superVoxelClustering_s(PointCloudT::Ptr cloud, float voxel_res, float seed_res, float color_imp, float spatial_imp);
