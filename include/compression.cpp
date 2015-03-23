@@ -267,9 +267,10 @@ namespace EXX{
 	    gp3.setMaximumNearestNeighbors( gp3_max_nearest_neighbours_ );
 	    gp3.setMaximumSurfaceAngle( gp3_max_surface_angle_ );
 	    gp3.setMinimumAngle( gp3_min_angle_ );
-	    gp3.setMaximumAngle( gp3_max_angle ); // 120 degrees
+	    gp3.setMaximumAngle( gp3_max_angle_ ); // 120 degrees
 	    gp3.setNormalConsistency(false);
 
+	    std::cout << "hmm" << std::endl;
 	    tree->setInputCloud (cloud);
 	    n.setInputCloud (cloud);
 	    n.setSearchMethod (tree);
@@ -278,6 +279,7 @@ namespace EXX{
 
 	    // Concatenate the XYZ and normal fields*
 	    pcl::concatenateFields (*cloud, *normals, *cloud_with_normals);
+	    std::cout << "hmm2" << std::endl;
 	    tree2->setInputCloud (cloud_with_normals);
 
 	    // Get result
@@ -309,6 +311,24 @@ namespace EXX{
 		cross.push_back(x0x1[0]*x0x2[1] - x0x1[1]*x0x2[0]);
 
 		return sqrt(cross[0]*cross[0] + cross[1]*cross[1] + cross[2]*cross[2]) / sqrt(x1x2[0]*x1x2[0] + x1x2[1]*x1x2[1] + x1x2[2]*x1x2[2]);
+	}
+
+	void compression::triangulate(){
+		compression::voxelGridFilter();
+		compression::extractPlanesRANSAC();
+		compression::planeToConcaveHull();
+		compression::reumannWitkamLineSimplification();
+		compression::superVoxelClustering();
+		compression::greedyProjectionTriangulation();
+	}
+
+	void compression::triangulatePlanes(){
+		compression::voxelGridFilter();
+		compression::extractPlanesRANSAC();
+		compression::planeToConcaveHull();
+		compression::reumannWitkamLineSimplification();
+		compression::superVoxelClustering();
+		compression::greedyProjectionTriangulationPlanes();
 	}
 
 
