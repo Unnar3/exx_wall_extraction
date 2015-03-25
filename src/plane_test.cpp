@@ -1,83 +1,106 @@
 #include <ros/ros.h>
-#include <compression/plane_extraction.h>
 #include <exx_common_node/Node.h>
+#include <exx_compression/compression.h>
 // PCL specific includes
 #include <pcl/io/pcd_io.h>
+#include <pcl/io/vtk_lib_io.h>
+#include <pcl/io/vtk_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl/filters/extract_indices.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/filters/project_inliers.h>
-#include <pcl/ModelCoefficients.h>
-#include <pcl/filters/voxel_grid.h>
 // OTHER
 #include <pcl/console/parse.h>
 #include <vector>
-#include <compression.h>
 
 
 // DEFINITIONS
+#define PRINT               1
 #define HZ                  10
 #define BUFFER_SIZE         1
 #define NODE_NAME           "test_node"
-const std::string METAROOM = "/home/unnar/catkin_ws/src/Metarooms/room_0/";
 
 typedef pcl::PointXYZRGB PointT;
 typedef pcl::PointNormal PointNT;
 typedef pcl::PointCloud<PointT> PointCloudT;
 typedef pcl::PointCloud<PointNT> PointNCloudT;
-typedef pcl::ModelCoefficients ModelCoeffT;
-typedef pcl::PlanarRegion<PointT> PlanarRegT;
 using namespace std;
-using namespace exx::compression;
 
 class PlaneTest// : public exx::Node
 {
 
+    bool printParameters;
+    double SVVoxelResolution;
+    double SVSeedResolution;
+    double RANSACDistanceThreshold;
     ros::NodeHandle nh;
 
-    double	voxel_leaf_size;
-    double 	seg_distance, seg_percentage, normal_distance_weight;
+    // Params
+    std::string savePath;
+    std::string cloudPath;
+
     std::string point_cloud_name;
 
 public:
-    PlaneTest()
+    PlaneTest() : printParameters(true)
     {
         nh = ros::NodeHandle("~");
+        loadParams();
     }
 
     void testCompression()
     {
-        int serial;
         std::cout << "testing that it works." << std::endl;
-        nh.param<int>("serial", serial, 50);
-        std::string savePath;
-        nh.param<std::string>("savePath", savePath, "./");
-        // nh.getParam("serial", serial);
-
-        std::cout << "Parameter test: " << serial << std::endl;
 
         PointCloudT::Ptr cloud (new PointCloudT ());
-        pcl::io::loadPCDFile ("/home/unnar/catkin_ws/src/Metarooms/room_2/complete_cloud.pcd", *cloud);
-        // pcl::io::savePCDFileBinary ("input_cloud.pcd", *cloud);
+        pcl::io::loadPCDFile (cloudPath, *cloud);
+        pcl::io::savePCDFileBinary ("input_cloud.pcd", *cloud);
         EXX::compression cmprs;
         cmprs.setInputCloud(cloud);
+        cmprs.setSVVoxelResolution(SVVoxelResolution);
+        cmprs.setSVSeedResolution(SVSeedResolution);
+        cmprs.setRANSACDistanceThreshold(RANSACDistanceThreshold);
         cmprs.triangulate();
-        cmprs.saveMesh(savePath);
+        std::vector<EXX::cloudMesh> cmesh;
+        cmesh = cmprs.returnCloudMesh();
+        pcl::io::savePCDFileASCII ("cmprs_output_cloud.pcd", *cmesh[0].cloud);
+        pcl::io::saveVTKFile ("cmprs_output_mesh.vtk", cmesh[0].mesh);
         std::cout << "Cloud should be saved." << std::endl;
     }
 
 private:
-    void voxelGridCloud(pcl::PointCloud<PointT>::Ptr cloud, float leaf_size)
-    {
-        pcl::PointCloud <PointT>::Ptr cloud_voxel (new pcl::PointCloud <PointT> ());
-        pcl::VoxelGrid<PointT> sor;
-        sor.setInputCloud (cloud);
-        sor.setLeafSize (leaf_size, leaf_size, leaf_size);
-        sor.filter (*cloud_voxel);
-        *cloud = *cloud_voxel;
+    void loadParams(){
+        std::cout << "" << std::endl;
+        std::cout << "##################" << std::endl;
+        std::cout << "LOADING PARAMETERS" << std::endl;
+
+        add_param( "printParameters", printParameters, true);
+        add_param( "savePath", savePath, "./");
+        add_param( "cloudPath", cloudPath, "./");
+        add_param( "SVVoxelResolution", SVVoxelResolution, 0.1);
+        add_param( "SVSeedResolution", SVSeedResolution, 0.3);
+        add_param( "RANSACDistanceThreshold", RANSACDistanceThreshold, 0.04);
+
+        std::cout << "##################" << std::endl;
+        std::cout << "" << std::endl;
     }
-    
+
+    template <typename T, typename C>
+    void add_param(const std::string & name, T & destination, const C & default_value) {
+        nh.param<T>(name, destination, default_value);
+        if (printParameters){
+            if ( typeid(T) == typeid(bool) ){
+                std::cout << std::boolalpha << name << ": " << destination << std::endl;
+            } else {
+                std::cout << name << ": " << destination << std::endl;
+            }
+        }
+    }
+
+    /**
+     * Fix for above method when destination is a std::string but default value is a char[].
+     */
+    void add_param(const std::string & name, std::string & destination, const char default_value[]) {
+        add_param(name, destination, std::string(default_value));
+    }
 };
 
 int main(int argc, char **argv) {

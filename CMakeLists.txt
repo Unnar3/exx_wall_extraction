@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
 	exx_common_node
 	pcl_conversions
   	pcl_ros
+  	exx_compression
 )
 
 #add_message_files(FILES
@@ -22,12 +23,12 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package(
 	DEPENDS
-	CATKIN_DEPENDS message_runtime exx_common_node
+	CATKIN_DEPENDS message_runtime exx_common_node exx_compression
 )
-include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+include_directories(${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 
-add_executable(plane_test src/plane_test.cpp include/compression.cpp)
-target_link_libraries(plane_test ${catkin_LIBRARIES})
-add_executable(plane_compression src/plane_compression.cpp)
-target_link_libraries(plane_compression ${catkin_LIBRARIES} libvtkCommon.so libvtkFiltering.so libvtkGraphics.so)
+add_executable(plane_test src/plane_test.cpp)
+target_link_libraries(plane_test ${catkin_LIBRARIES} compression libvtkCommon.so libvtkFiltering.so libvtkGraphics.so)
+#add_executable(plane_compression src/plane_compression.cpp)
+#target_link_libraries(plane_compression ${catkin_LIBRARIES} libvtkCommon.so libvtkFiltering.so libvtkGraphics.so)

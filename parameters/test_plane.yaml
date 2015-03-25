@@ -1,6 +1,8 @@
 {
-savePath: "/home/unnar/catkin_ws/src/exx_wall_extraction/run/",
-serial : 10, 
-serial2: 20,
-serial3: 30
+printParameters         : true,
+savePath                : "/home/unnar/catkin_ws/src/exx_wall_extraction/run/",
+cloudPath               : "/home/unnar/catkin_ws/src/Metarooms/room_0/complete_cloud.pcd",
+SVVoxelResolution       : 0.05,
+SVSeedResolution        : 0.15,
+RANSACDistanceThreshold : 0.4,
 }
