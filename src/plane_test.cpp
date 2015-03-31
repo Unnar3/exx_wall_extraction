@@ -1,5 +1,4 @@
 #include <ros/ros.h>
-#include <exx_common_node/Node.h>
 #include <exx_compression/compression.h>
 // PCL specific includes
 #include <pcl/io/pcd_io.h>
@@ -7,9 +6,12 @@
 #include <pcl/io/vtk_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/filters/statistical_outlier_removal.h>
 // OTHER
 #include <pcl/console/parse.h>
 #include <vector>
+#include <stdlib.h>
+#include <time.h>
 
 
 // DEFINITIONS
@@ -31,6 +33,8 @@ class PlaneTest// : public exx::Node
     double SVVoxelResolution;
     double SVSeedResolution;
     double RANSACDistanceThreshold;
+    double ECClusterTolerance;
+    int ECMinClusterSize;
     ros::NodeHandle nh;
 
     // Params
@@ -51,22 +55,70 @@ public:
         std::cout << "testing that it works." << std::endl;
 
         PointCloudT::Ptr cloud (new PointCloudT ());
+        PointCloudT::Ptr cloud_f (new PointCloudT ());
         pcl::io::loadPCDFile (cloudPath, *cloud);
-        pcl::io::savePCDFileBinary ("input_cloud.pcd", *cloud);
+        pcl::io::savePCDFileBinary (savePath + "input_cloud.pcd", *cloud);
+
+        // Create the filtering object
+        pcl::StatisticalOutlierRemoval<PointT> sor;
+        sor.setInputCloud (cloud);
+        sor.setMeanK (15);
+        sor.setStddevMulThresh (1.5);
+        sor.filter (*cloud_f);
+
         EXX::compression cmprs;
-        cmprs.setInputCloud(cloud);
+        cmprs.setInputCloud(cloud_f);
         cmprs.setSVVoxelResolution(SVVoxelResolution);
         cmprs.setSVSeedResolution(SVSeedResolution);
         cmprs.setRANSACDistanceThreshold(RANSACDistanceThreshold);
-        cmprs.triangulate();
-        std::vector<EXX::cloudMesh> cmesh;
-        cmesh = cmprs.returnCloudMesh();
-        pcl::io::savePCDFileASCII ("cmprs_output_cloud.pcd", *cmesh[0].cloud);
-        pcl::io::saveVTKFile ("cmprs_output_mesh.vtk", cmesh[0].mesh);
-        std::cout << "Cloud should be saved." << std::endl;
+        cmprs.setECClusterTolerance(ECClusterTolerance);
+        cmprs.setECMinClusterSize(ECMinClusterSize);
+        // cmprs.triangulate();
+        cmprs.voxelGridFilter();
+        cmprs.extractPlanesRANSAC();
+        cmprs.euclideanClusterPlanes();
+
+        std::vector<PointCloudT::Ptr > planes_original;
+        std::vector<PointCloudT::Ptr > planes;
+        planes_original = cmprs.returnPlanes();
+        planes = cmprs.returnECPlanes();
+
+        int r, g, b;
+        PointCloudT::Ptr colored_cloud (new PointCloudT ());
+        std::vector<PointCloudT::Ptr >::iterator it = planes.begin();
+        srand ( time(NULL) );
+        for ( ; it != planes.end() ; ++it ){
+            r = rand () % 255;
+            g = rand () % 255;
+            b = rand () % 255;
+            std::vector<PointT, Eigen::aligned_allocator_indirection<PointT> >::iterator pit = (*it)->points.begin();
+            for ( ; pit != (*it)->points.end() ; ++pit ){
+                (*pit).r = r;
+                (*pit).g = g;
+                (*pit).b = b;
+            } 
+            *colored_cloud += **it;
+        }
+
+        std::cout << "Original size: " << planes_original.size() << std::endl;
+        std::cout << "Segmented size: " << planes.size() << std::endl;
+        
+        pcl::io::savePCDFileASCII (savePath + "colored_cloud.pcd", *colored_cloud);
+
+        // std::vector<EXX::cloudMesh> cmesh;
+        // cmesh = cmprs.returnCloudMesh();
+        // pcl::io::savePCDFileASCII ("cmprs_output_cloud.pcd", *cmesh[0].cloud);
+        // pcl::io::saveVTKFile ("cmprs_output_mesh.vtk", cmesh[0].mesh);
+        // std::cout << "Cloud should be saved." << std::endl;
     }
 
 private:
+
+    std::vector<std::vector<int> > getColors(){
+        std::vector<std::vector<int> > colors;
+
+    }
+
     void loadParams(){
         std::cout << "" << std::endl;
         std::cout << "##################" << std::endl;
@@ -78,6 +130,8 @@ private:
         add_param( "SVVoxelResolution", SVVoxelResolution, 0.1);
         add_param( "SVSeedResolution", SVSeedResolution, 0.3);
         add_param( "RANSACDistanceThreshold", RANSACDistanceThreshold, 0.04);
+        add_param( "ECClusterTolerance", ECClusterTolerance, 0.05);
+        add_param( "ECMinClusterSize", ECMinClusterSize, 100);
 
         std::cout << "##################" << std::endl;
         std::cout << "" << std::endl;
