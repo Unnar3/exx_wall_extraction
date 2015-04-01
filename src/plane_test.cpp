@@ -34,6 +34,9 @@ class PlaneTest// : public exx::Node
     double SVSeedResolution;
     double RANSACDistanceThreshold;
     double ECClusterTolerance;
+    double VoxelResolution;
+    int MeanK;
+    double stdDev;
     int ECMinClusterSize;
     ros::NodeHandle nh;
 
@@ -62,48 +65,87 @@ public:
         // Create the filtering object
         pcl::StatisticalOutlierRemoval<PointT> sor;
         sor.setInputCloud (cloud);
-        sor.setMeanK (15);
-        sor.setStddevMulThresh (1.5);
+        sor.setMeanK (MeanK);
+        sor.setStddevMulThresh (stdDev);
         sor.filter (*cloud_f);
 
         EXX::compression cmprs;
-        cmprs.setInputCloud(cloud_f);
         cmprs.setSVVoxelResolution(SVVoxelResolution);
         cmprs.setSVSeedResolution(SVSeedResolution);
         cmprs.setRANSACDistanceThreshold(RANSACDistanceThreshold);
         cmprs.setECClusterTolerance(ECClusterTolerance);
         cmprs.setECMinClusterSize(ECMinClusterSize);
-        // cmprs.triangulate();
-        cmprs.voxelGridFilter();
-        cmprs.extractPlanesRANSAC();
-        cmprs.euclideanClusterPlanes();
-
-        std::vector<PointCloudT::Ptr > planes_original;
-        std::vector<PointCloudT::Ptr > planes;
-        planes_original = cmprs.returnPlanes();
-        planes = cmprs.returnECPlanes();
-
-        int r, g, b;
-        PointCloudT::Ptr colored_cloud (new PointCloudT ());
-        std::vector<PointCloudT::Ptr >::iterator it = planes.begin();
-        srand ( time(NULL) );
-        for ( ; it != planes.end() ; ++it ){
-            r = rand () % 255;
-            g = rand () % 255;
-            b = rand () % 255;
-            std::vector<PointT, Eigen::aligned_allocator_indirection<PointT> >::iterator pit = (*it)->points.begin();
-            for ( ; pit != (*it)->points.end() ; ++pit ){
-                (*pit).r = r;
-                (*pit).g = g;
-                (*pit).b = b;
-            } 
-            *colored_cloud += **it;
-        }
-
-        std::cout << "Original size: " << planes_original.size() << std::endl;
-        std::cout << "Segmented size: " << planes.size() << std::endl;
+        cmprs.setVoxelLeafSize(VoxelResolution);
         
-        pcl::io::savePCDFileASCII (savePath + "colored_cloud.pcd", *colored_cloud);
+        PointCloudT::Ptr voxel_cloud (new PointCloudT ());
+        EXX::planesAndCoeffs pac;
+        std::vector<PointCloudT::Ptr> c_planes;
+        std::vector<PointCloudT::Ptr> hulls;
+        std::vector<PointCloudT::Ptr> simplified_hulls;
+        std::vector<PointCloudT::Ptr> super_planes;
+        std::vector<EXX::cloudMesh> cm;
+        clock_t t1,t2,t3,t4,t5,t6,t7,t8,t9;
+        t1=clock();
+        cmprs.voxelGridFilter(cloud_f, voxel_cloud);
+        t2=clock();
+        cmprs.extractPlanesRANSAC(voxel_cloud, &pac);
+        t3=clock();
+        cmprs.projectToPlane(&pac);
+        t4=clock();
+        cmprs.euclideanClusterPlanes(&pac.cloud, &c_planes);
+        t5=clock();
+        cmprs.planeToConcaveHull(&c_planes, &hulls);
+        t6=clock();
+        cmprs.reumannWitkamLineSimplification( &hulls, &simplified_hulls);
+        t7=clock();
+        cmprs.superVoxelClustering(&c_planes, &super_planes);
+        t8=clock();
+        cmprs.greedyProjectionTriangulationPlanes(voxel_cloud, &super_planes, &simplified_hulls, &cm);
+        t9=clock();
+
+        std::cout << "Total time: " << double(t9-t1) / CLOCKS_PER_SEC << std::endl;
+        std::cout << "Voxel time: " << double(t2-t1) / CLOCKS_PER_SEC << std::endl;
+        std::cout << "RANSAC time: " << double(t3-t2) / CLOCKS_PER_SEC << std::endl;
+        std::cout << "Project time: " << double(t4-t3) / CLOCKS_PER_SEC << std::endl;
+        std::cout << "EC time: " << double(t5-t4) / CLOCKS_PER_SEC << std::endl;
+        std::cout << "Hull time: " << double(t6-t5) / CLOCKS_PER_SEC << std::endl;
+        std::cout << "Simple Hull time: " << double(t7-t6) / CLOCKS_PER_SEC << std::endl;
+        std::cout << "Super Voxel time: " << double(t8-t7) / CLOCKS_PER_SEC << std::endl;
+        std::cout << "triangulation time: " << double(t9-t8) / CLOCKS_PER_SEC << std::endl;
+
+        // cmprs.setInputCloud(cloud_f);
+        
+        // // cmprs.triangulate();
+        // cmprs.voxelGridFilter();
+        // cmprs.extractPlanesRANSAC();
+        // cmprs.euclideanClusterPlanes();
+
+        // std::vector<PointCloudT::Ptr > planes_original;
+        // std::vector<PointCloudT::Ptr > planes;
+        // planes_original = cmprs.returnPlanes();
+        // planes = cmprs.returnECPlanes();
+
+        // int r, g, b;
+        // PointCloudT::Ptr colored_cloud (new PointCloudT ());
+        // std::vector<PointCloudT::Ptr >::iterator it = planes.begin();
+        // srand ( time(NULL) );
+        // for ( ; it != planes.end() ; ++it ){
+        //     r = rand () % 255;
+        //     g = rand () % 255;
+        //     b = rand () % 255;
+        //     std::vector<PointT, Eigen::aligned_allocator_indirection<PointT> >::iterator pit = (*it)->points.begin();
+        //     for ( ; pit != (*it)->points.end() ; ++pit ){
+        //         (*pit).r = r;
+        //         (*pit).g = g;
+        //         (*pit).b = b;
+        //     } 
+        //     *colored_cloud += **it;
+        // }
+
+        // std::cout << "Original size: " << planes_original.size() << std::endl;
+        // std::cout << "Segmented size: " << planes.size() << std::endl;
+        
+        // pcl::io::savePCDFileASCII (savePath + "colored_cloud.pcd", *colored_cloud);
 
         // std::vector<EXX::cloudMesh> cmesh;
         // cmesh = cmprs.returnCloudMesh();
@@ -127,11 +169,14 @@ private:
         add_param( "printParameters", printParameters, true);
         add_param( "savePath", savePath, "./");
         add_param( "cloudPath", cloudPath, "./");
+        add_param( "VoxelResolution",VoxelResolution, 0.01);
         add_param( "SVVoxelResolution", SVVoxelResolution, 0.1);
         add_param( "SVSeedResolution", SVSeedResolution, 0.3);
         add_param( "RANSACDistanceThreshold", RANSACDistanceThreshold, 0.04);
         add_param( "ECClusterTolerance", ECClusterTolerance, 0.05);
         add_param( "ECMinClusterSize", ECMinClusterSize, 100);
+        add_param( "MeanK", MeanK, 15);
+        add_param( "stdDev", stdDev, 15);
 
         std::cout << "##################" << std::endl;
         std::cout << "" << std::endl;
