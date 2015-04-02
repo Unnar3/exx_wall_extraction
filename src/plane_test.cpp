@@ -63,19 +63,21 @@ public:
         pcl::io::savePCDFileBinary (savePath + "input_cloud.pcd", *cloud);
 
         // Create the filtering object
-        pcl::StatisticalOutlierRemoval<PointT> sor;
-        sor.setInputCloud (cloud);
-        sor.setMeanK (MeanK);
-        sor.setStddevMulThresh (stdDev);
-        sor.filter (*cloud_f);
+        // pcl::StatisticalOutlierRemoval<PointT> sor;
+        // sor.setInputCloud (cloud);
+        // sor.setMeanK (MeanK);
+        // sor.setStddevMulThresh (stdDev);
+        // sor.filter (*cloud_f);
 
         EXX::compression cmprs;
         cmprs.setSVVoxelResolution(SVVoxelResolution);
         cmprs.setSVSeedResolution(SVSeedResolution);
         cmprs.setRANSACDistanceThreshold(RANSACDistanceThreshold);
+        cmprs.setRANSACMaxIteration(10);
         cmprs.setECClusterTolerance(ECClusterTolerance);
         cmprs.setECMinClusterSize(ECMinClusterSize);
         cmprs.setVoxelLeafSize(VoxelResolution);
+        cmprs.setRANSACMinInliers(20);
         
         PointCloudT::Ptr voxel_cloud (new PointCloudT ());
         EXX::planesAndCoeffs pac;
@@ -86,7 +88,7 @@ public:
         std::vector<EXX::cloudMesh> cm;
         clock_t t1,t2,t3,t4,t5,t6,t7,t8,t9;
         t1=clock();
-        cmprs.voxelGridFilter(cloud_f, voxel_cloud);
+        cmprs.voxelGridFilter(cloud, voxel_cloud);
         t2=clock();
         cmprs.extractPlanesRANSAC(voxel_cloud, &pac);
         t3=clock();
@@ -124,12 +126,28 @@ public:
         // std::vector<PointCloudT::Ptr > planes;
         // planes_original = cmprs.returnPlanes();
         // planes = cmprs.returnECPlanes();
+        
+        PointCloudT::Ptr colored_cloud (new PointCloudT ());
+        PointCloudT::Ptr tmp_cloud (new PointCloudT ());
+        int r, g, b;
+        for (int i = 0; i < super_planes.size(); ++i){
+            *tmp_cloud = *super_planes[i] + *simplified_hulls[i];
+            r = rand () % 255;
+            g = rand () % 255;
+            b = rand () % 255;
+            for (int j; j < tmp_cloud->points.size(); ++j){
+                tmp_cloud->points[j].r = r;
+                tmp_cloud->points[j].g = g;
+                tmp_cloud->points[j].b = b;
+            }
+            *colored_cloud += *tmp_cloud;
+        }
 
-        // int r, g, b;
-        // PointCloudT::Ptr colored_cloud (new PointCloudT ());
-        // std::vector<PointCloudT::Ptr >::iterator it = planes.begin();
+       
+        
+        // std::vector<PointCloudT::Ptr >::iterator it = super_planes.begin();
         // srand ( time(NULL) );
-        // for ( ; it != planes.end() ; ++it ){
+        // for ( ; it != super_planes.end() ; ++it ){
         //     r = rand () % 255;
         //     g = rand () % 255;
         //     b = rand () % 255;
@@ -141,11 +159,12 @@ public:
         //     } 
         //     *colored_cloud += **it;
         // }
+        // *colored_cloud += *voxel_cloud;
 
         // std::cout << "Original size: " << planes_original.size() << std::endl;
         // std::cout << "Segmented size: " << planes.size() << std::endl;
         
-        // pcl::io::savePCDFileASCII (savePath + "colored_cloud.pcd", *colored_cloud);
+        pcl::io::savePCDFileASCII (savePath + "colored_cloud.pcd", *colored_cloud);
 
         // std::vector<EXX::cloudMesh> cmesh;
         // cmesh = cmprs.returnCloudMesh();
