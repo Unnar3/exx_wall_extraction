@@ -24,7 +24,7 @@ catkin_package(
 	DEPENDS
 	CATKIN_DEPENDS message_runtime exx_compression
 )
-include_directories(${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+include_directories(moment_of_inertia ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 
 add_executable(plane_test src/plane_test.cpp)

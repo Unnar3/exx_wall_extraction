@@ -7,6 +7,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/statistical_outlier_removal.h>
+#include "moment_of_inertia_estimation.h"
 // OTHER
 #include <pcl/console/parse.h>
 #include <vector>
@@ -114,18 +115,6 @@ public:
         std::cout << "Simple Hull time: " << double(t7-t6) / CLOCKS_PER_SEC << std::endl;
         std::cout << "Super Voxel time: " << double(t8-t7) / CLOCKS_PER_SEC << std::endl;
         std::cout << "triangulation time: " << double(t9-t8) / CLOCKS_PER_SEC << std::endl;
-
-        // cmprs.setInputCloud(cloud_f);
-        
-        // // cmprs.triangulate();
-        // cmprs.voxelGridFilter();
-        // cmprs.extractPlanesRANSAC();
-        // cmprs.euclideanClusterPlanes();
-
-        // std::vector<PointCloudT::Ptr > planes_original;
-        // std::vector<PointCloudT::Ptr > planes;
-        // planes_original = cmprs.returnPlanes();
-        // planes = cmprs.returnECPlanes();
         
         PointCloudT::Ptr colored_cloud (new PointCloudT ());
         PointCloudT::Ptr tmp_cloud (new PointCloudT ());
@@ -142,35 +131,19 @@ public:
             }
             *colored_cloud += *tmp_cloud;
         }
-
-       
-        
-        // std::vector<PointCloudT::Ptr >::iterator it = super_planes.begin();
-        // srand ( time(NULL) );
-        // for ( ; it != super_planes.end() ; ++it ){
-        //     r = rand () % 255;
-        //     g = rand () % 255;
-        //     b = rand () % 255;
-        //     std::vector<PointT, Eigen::aligned_allocator_indirection<PointT> >::iterator pit = (*it)->points.begin();
-        //     for ( ; pit != (*it)->points.end() ; ++pit ){
-        //         (*pit).r = r;
-        //         (*pit).g = g;
-        //         (*pit).b = b;
-        //     } 
-        //     *colored_cloud += **it;
-        // }
-        // *colored_cloud += *voxel_cloud;
-
-        // std::cout << "Original size: " << planes_original.size() << std::endl;
-        // std::cout << "Segmented size: " << planes.size() << std::endl;
         
         pcl::io::savePCDFileASCII (savePath + "colored_cloud.pcd", *colored_cloud);
 
-        // std::vector<EXX::cloudMesh> cmesh;
-        // cmesh = cmprs.returnCloudMesh();
-        // pcl::io::savePCDFileASCII ("cmprs_output_cloud.pcd", *cmesh[0].cloud);
-        // pcl::io::saveVTKFile ("cmprs_output_mesh.vtk", cmesh[0].mesh);
-        // std::cout << "Cloud should be saved." << std::endl;
+        // Nýtt test
+        pcl::PointCloud<PointT>::Ptr cloud22 (new pcl::PointCloud<PointT> ());
+        pcl::MomentOfInertiaEstimation<PointT> feature_extractor;
+        feature_extractor.setInputCloud (c_planes[0]);
+        feature_extractor.compute ();
+        PointT min_point_OBB;
+        PointT max_point_OBB;
+        PointT position_OBB;
+        Eigen::Matrix3f rotational_matrix_OBB;  
+        feature_extractor.getOBB (min_point_OBB, max_point_OBB, position_OBB, rotational_matrix_OBB);
     }
 
 private:
