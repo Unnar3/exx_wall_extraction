@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(exx_plane_extraction)
 
+set(CMAKE_CXX_FLAGS "-O4 -Wall -fPIC -std=c++0x ${CMAKE_CXX_FLAGS}")
+
 find_package(catkin REQUIRED COMPONENTS
   	sensor_msgs
 	roscpp
@@ -10,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
 	pcl_conversions
   	pcl_ros
   	exx_compression
+  	ransac_primitives
 )
 
 #add_message_files(FILES

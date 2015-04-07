@@ -23,4 +23,6 @@
   <build_depend>pcl_ros</build_depend>
   <build_depend>exx_compression</build_depend>
   <run_depend>exx_compression</run_depend>
+  <build_depend>ransac_primitives</build_depend>
+  <run_depend>ransac_primitives</run_depend>
 </package>
