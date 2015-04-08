@@ -115,13 +115,13 @@ public:
         // sphere_primitive and cylinder_primitive have not been ported to the new framework yet
         primitive_params params;
         params.number_disjoint_subsets = 10;
-        params.octree_res = 0.1;
-        params.normal_neigbourhood = 0.20;
-        params.inlier_threshold = 0.04;
-        params.angle_threshold = 0.2;
-        params.add_threshold = 0.1;
-        params.min_shape = cloud->points.size()*0.001;
-        params.inlier_min = 10;//params.min_shape;
+        params.octree_res = 2.0;
+        params.normal_neigbourhood = 0.05;
+        params.inlier_threshold = 0.1;
+        params.angle_threshold = 0.3;
+        params.add_threshold = 0.01;
+        params.min_shape = cloud->points.size()*0.0001;
+        params.inlier_min = params.min_shape;
         params.connectedness_res = 0.06;
         params.distance_threshold = 0.0;
 
@@ -136,23 +136,20 @@ public:
             ind = extracted[j]->supporting_inds;
             PointCloudT::Ptr test_cloud (new PointCloudT ());
             for (size_t i = 0; i < ind.size(); ++i){
-                    test_cloud->points.push_back(voxel_cloud->points[ind[i]]);
+                test_cloud->points.push_back(voxel_cloud->points[ind[i]]);
             }
             std::cout << "pushing" << std::endl;
             plane_vec.push_back(test_cloud);
         }
         
-        // pcl::io::savePCDFileBinary (savePath + "maybe_plane.pcd", *test_cloud   );
-
-        
-        
+        // pcl::io::savePCDFileBinary (savePath + "maybe_plane.pcd", *test_cloud);  
         // cmprs.extractPlanesRANSAC(voxel_cloud, &pac);
         // t3=clock();
         // cmprs.projectToPlane(&pac);
-        // t4=clock();
-        // cmprs.euclideanClusterPlanes(&pac.cloud, &c_planes);
-        // t5=clock();
-        cmprs.planeToConcaveHull(&plane_vec, &hulls);
+        t4=clock();
+        cmprs.euclideanClusterPlanes(&plane_vec, &c_planes);
+        t5=clock();
+        cmprs.planeToConcaveHull(&c_planes, &hulls);
         t6=clock();
         cmprs.reumannWitkamLineSimplification( &hulls, &simplified_hulls);
         t7=clock();
@@ -161,15 +158,15 @@ public:
         cmprs.greedyProjectionTriangulationPlanes(voxel_cloud, &super_planes, &simplified_hulls, &cm);
         t9=clock();
 
-        // std::cout << "Total time: " << double(t9-t1) / CLOCKS_PER_SEC << std::endl;
-        // std::cout << "Voxel time: " << double(t2-t1) / CLOCKS_PER_SEC << std::endl;
-        // std::cout << "RANSAC time: " << double(t3-t2) / CLOCKS_PER_SEC << std::endl;
+        std::cout << "Total time: " << double(t9-t1) / CLOCKS_PER_SEC << std::endl;
+        std::cout << "Voxel time: " << double(t2-t1) / CLOCKS_PER_SEC << std::endl;
+        std::cout << "RANSAC time: " << double(t4-t2) / CLOCKS_PER_SEC << std::endl;
         // std::cout << "Project time: " << double(t4-t3) / CLOCKS_PER_SEC << std::endl;
-        // std::cout << "EC time: " << double(t5-t4) / CLOCKS_PER_SEC << std::endl;
-        // std::cout << "Hull time: " << double(t6-t5) / CLOCKS_PER_SEC << std::endl;
-        // std::cout << "Simple Hull time: " << double(t7-t6) / CLOCKS_PER_SEC << std::endl;
-        // std::cout << "Super Voxel time: " << double(t8-t7) / CLOCKS_PER_SEC << std::endl;
-        // std::cout << "triangulation time: " << double(t9-t8) / CLOCKS_PER_SEC << std::endl;
+        std::cout << "EC time: " << double(t5-t4) / CLOCKS_PER_SEC << std::endl;
+        std::cout << "Hull time: " << double(t6-t5) / CLOCKS_PER_SEC << std::endl;
+        std::cout << "Simple Hull time: " << double(t7-t6) / CLOCKS_PER_SEC << std::endl;
+        std::cout << "Super Voxel time: " << double(t8-t7) / CLOCKS_PER_SEC << std::endl;
+        std::cout << "triangulation time: " << double(t9-t8) / CLOCKS_PER_SEC << std::endl;
         
         PointCloudT::Ptr colored_cloud (new PointCloudT ());
         PointCloudT::Ptr tmp_cloud (new PointCloudT ());
@@ -189,47 +186,67 @@ public:
         
         pcl::io::savePCDFileASCII (savePath + "colored_cloud.pcd", *colored_cloud);
 
-        // // Nýtt test
-        // pcl::PointCloud<PointT>::Ptr cloud22 (new pcl::PointCloud<PointT> ());
-        // pcl::MomentOfInertiaEstimation<PointT> feature_extractor;
-        // PointT min_point_OBB;
-        // PointT max_point_OBB;
-        // PointT position_OBB;
-        // Eigen::Matrix3f rotational_matrix_OBB;  
+        // Nýtt test
+        pcl::PointCloud<PointT>::Ptr cloud22 (new pcl::PointCloud<PointT> ());
+        pcl::MomentOfInertiaEstimation<PointT> feature_extractor;
+        PointT min_point_OBB;
+        PointT max_point_OBB;
+        PointT position_OBB;
+        Eigen::Matrix3f rotational_matrix_OBB;  
 
-        // boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
-        // viewer->setBackgroundColor (0, 0, 0);
-        // viewer->addCoordinateSystem (1.0);
-        // viewer->initCameraParameters ();
-        // boost::shared_ptr<pcl::visualization::PCLVisualizer> customColourVis (pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud);
-        // ostringstream convert;   
-        // // string str = string(intStr);
-        // float f;
-        // for (size_t i = 0; i < c_planes.size(); ++i){
-        //     r = rand () % 155;
-        //     g = rand () % 155;
-        //     b = rand () % 155;
-        //     pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], r,g,b);
-        //     convert << i;
-        //     feature_extractor.setInputCloud (c_planes[i]);
-        //     feature_extractor.compute ();
-        //     feature_extractor.getOBB (min_point_OBB, max_point_OBB, position_OBB, rotational_matrix_OBB);
-        //     Eigen::Vector3f position (position_OBB.x, position_OBB.y, position_OBB.z);
-        //     Eigen::Quaternionf quat (rotational_matrix_OBB);
-        //     viewer->addCube (position, quat, max_point_OBB.x - min_point_OBB.x, max_point_OBB.y - min_point_OBB.y, max_point_OBB.z - min_point_OBB.z, "OBB"+convert.str());
-        //     viewer->addPointCloud(c_planes[i], single_color, convert.str());
-        //     f = pcl::calculatePolygonArea(*hulls[i]);
-        //     std::cout << "Total area: " << f << std::endl;
-        // }   
-       
-        // while(!viewer->wasStopped())
-        // {
-        //     viewer->spinOnce (100);
-        //     boost::this_thread::sleep (boost::posix_time::microseconds (100000));
-        // }
+        boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+        viewer->setBackgroundColor (0, 0, 0);
+        viewer->addCoordinateSystem (1.0);
+        viewer->initCameraParameters ();
+        boost::shared_ptr<pcl::visualization::PCLVisualizer> customColourVis (pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud);
+        ostringstream convert;   
+        // string str = string(intStr);
+        float f;
+        for (size_t i = 0; i < c_planes.size(); ++i){
+            r = rand () % 155;
+            g = rand () % 155;
+            b = rand () % 155;
+            pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], r,g,b);
+            convert << i;
+            feature_extractor.setInputCloud (c_planes[i]);
+            feature_extractor.compute ();
+            feature_extractor.getOBB (min_point_OBB, max_point_OBB, position_OBB, rotational_matrix_OBB);
+            Eigen::Vector3f position (position_OBB.x, position_OBB.y, position_OBB.z);
+            Eigen::Quaternionf quat (rotational_matrix_OBB);
+            viewer->addCube (position, quat, max_point_OBB.x - min_point_OBB.x, max_point_OBB.y - min_point_OBB.y, max_point_OBB.z - min_point_OBB.z, "OBB"+convert.str());
+            viewer->addPointCloud(c_planes[i], single_color, convert.str());
+            f = pcl::calculatePolygonArea(*hulls[i]);
+            std::cout << "Hull area: " << f;
+            std::cout << "cube area: " << getBiggestCubeArea(min_point_OBB, max_point_OBB) << std::endl;
+        }   
+        r = rand () % 155;
+        g = rand () % 155;
+        b = rand () % 155;
+        pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (extractor.getCloud(), r,g,b);
+        viewer->addPointCloud(extractor.getCloud(), single_color, "rest");
+        while(!viewer->wasStopped())
+        {
+            viewer->spinOnce (100);
+            boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+        }
     }
 
 private:
+
+    double getBiggestCubeArea(PointT minPoint, PointT maxPoint){
+        double x = maxPoint.x - minPoint.x;
+        double y = maxPoint.y - minPoint.y;
+        double z = maxPoint.z - minPoint.z;
+        if (x > z && y > z){
+            return x*y;
+        } else if (x > y && z > y) {
+            return x*z;
+        }
+        else {
+            return y*z;
+        }
+    }
+
 
     void loadParams(){
         std::cout << "" << std::endl;
