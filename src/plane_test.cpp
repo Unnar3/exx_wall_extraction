@@ -16,6 +16,7 @@
 #include <pcl/common/transforms.h>
 // OTHER
 #include <pcl/console/parse.h>
+#include <Eigen/Dense>
 #include <vector>
 #include <stdlib.h>
 #include <time.h>
@@ -34,9 +35,18 @@ typedef pcl::PointCloud<PointT> PointCloudT;
 typedef pcl::PointCloud<PointNT> PointNCloudT;
 using namespace std;
 
-class PlaneTest// : public exx::Node
-{
+struct planeDescriptor{
+    std::vector<float> momentOfInertia;
+    double boundingBoxArea;
+    double hullArea;
+    double hullBoundingBoxRatio;
+    double widthLengthRatio;
+    double distFromCentroid;
+    Eigen::Vector4d normal;
+};
 
+class PlaneTest
+{ 
     bool printParameters;
     double SVVoxelResolution;
     double SVSeedResolution;
@@ -106,10 +116,7 @@ public:
         std::vector<PointCloudT::Ptr> simplified_hulls;
         std::vector<PointCloudT::Ptr> super_planes;
         std::vector<EXX::cloudMesh> cm;
-        clock_t t1,t2,t3,t4,t5,t6,t7,t8,t9;
-        t1=clock();
         cmprs.voxelGridFilter(cloud, voxel_cloud);
-        t2=clock();
 
 
         // sphere_primitive and cylinder_primitive have not been ported to the new framework yet
@@ -144,47 +151,31 @@ public:
         
         // pcl::io::savePCDFileBinary (savePath + "maybe_plane.pcd", *test_cloud);  
         // cmprs.extractPlanesRANSAC(voxel_cloud, &pac);
-        // t3=clock();
         // cmprs.projectToPlane(&pac);
-        t4=clock();
-        cmprs.euclideanClusterPlanes(&plane_vec, &c_planes);
-        t5=clock();
-        cmprs.planeToConcaveHull(&c_planes, &hulls);
-        t6=clock();
+        // cmprs.euclideanClusterPlanes(&plane_vec, &c_planes);
+        cmprs.planeToConcaveHull(&plane_vec, &hulls);
         cmprs.reumannWitkamLineSimplification( &hulls, &simplified_hulls);
-        t7=clock();
-        cmprs.superVoxelClustering(&c_planes, &super_planes);
-        t8=clock();
+        cmprs.superVoxelClustering(&plane_vec, &super_planes);
         cmprs.greedyProjectionTriangulationPlanes(voxel_cloud, &super_planes, &simplified_hulls, &cm);
-        t9=clock();
+        
+        
+        // PointCloudT::Ptr colored_cloud (new PointCloudT ());
+        // PointCloudT::Ptr tmp_cloud (new PointCloudT ());
+        // int r, g, b;
+        // for (size_t i = 0; i < plane_vec.size(); ++i){
+        //     *tmp_cloud = *plane_vec[i] + *simplified_hulls[i];
+        //     r = rand () % 155;
+        //     g = rand () % 155;
+        //     b = rand () % 155;
+        //     for (size_t j = 0; j < tmp_cloud->points.size(); ++j){
+        //         tmp_cloud->points[j].r = r;
+        //         tmp_cloud->points[j].g = g;
+        //         tmp_cloud->points[j].b = b;
+        //     }
+        //     *colored_cloud += *tmp_cloud;
+        // }
 
-        std::cout << "Total time: " << double(t9-t1) / CLOCKS_PER_SEC << std::endl;
-        std::cout << "Voxel time: " << double(t2-t1) / CLOCKS_PER_SEC << std::endl;
-        std::cout << "RANSAC time: " << double(t4-t2) / CLOCKS_PER_SEC << std::endl;
-        // std::cout << "Project time: " << double(t4-t3) / CLOCKS_PER_SEC << std::endl;
-        std::cout << "EC time: " << double(t5-t4) / CLOCKS_PER_SEC << std::endl;
-        std::cout << "Hull time: " << double(t6-t5) / CLOCKS_PER_SEC << std::endl;
-        std::cout << "Simple Hull time: " << double(t7-t6) / CLOCKS_PER_SEC << std::endl;
-        std::cout << "Super Voxel time: " << double(t8-t7) / CLOCKS_PER_SEC << std::endl;
-        std::cout << "triangulation time: " << double(t9-t8) / CLOCKS_PER_SEC << std::endl;
-        
-        PointCloudT::Ptr colored_cloud (new PointCloudT ());
-        PointCloudT::Ptr tmp_cloud (new PointCloudT ());
-        int r, g, b;
-        for (size_t i = 0; i < plane_vec.size(); ++i){
-            *tmp_cloud = *plane_vec[i] + *simplified_hulls[i];
-            r = rand () % 155;
-            g = rand () % 155;
-            b = rand () % 155;
-            for (size_t j = 0; j < tmp_cloud->points.size(); ++j){
-                tmp_cloud->points[j].r = r;
-                tmp_cloud->points[j].g = g;
-                tmp_cloud->points[j].b = b;
-            }
-            *colored_cloud += *tmp_cloud;
-        }
-        
-        pcl::io::savePCDFileASCII (savePath + "colored_cloud.pcd", *colored_cloud);
+        // pcl::io::savePCDFileASCII (savePath + "colored_cloud.pcd", *colored_cloud);
 
         // Nýtt test
         pcl::PointCloud<PointT>::Ptr cloud22 (new pcl::PointCloud<PointT> ());
@@ -193,6 +184,7 @@ public:
         PointT max_point_OBB;
         PointT position_OBB;
         Eigen::Matrix3f rotational_matrix_OBB;  
+        std::vector<float> moment_of_inertia;
 
         boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
         viewer->setBackgroundColor (0, 0, 0);
@@ -200,30 +192,73 @@ public:
         viewer->initCameraParameters ();
         boost::shared_ptr<pcl::visualization::PCLVisualizer> customColourVis (pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud);
         ostringstream convert;   
-        // string str = string(intStr);
-        float f;
-        for (size_t i = 0; i < c_planes.size(); ++i){
-            r = rand () % 155;
-            g = rand () % 155;
-            b = rand () % 155;
-            pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], r,g,b);
+
+        std::vector<planeDescriptor> vPlaneDescriptor;
+        planeDescriptor pDescriptor;
+        double area;
+        double wlRatio;
+        int pos = 3;
+        Eigen::Vector4d normal;
+        srand (time(NULL));
+        for (auto i = 0; i < plane_vec.size(); ++i){
+            // r = rand () % 155;
+            // g = rand () % 155;
+            // b = rand () % 155;
+            // pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (plane_vec[i], r,g,b);
             convert << i;
-            feature_extractor.setInputCloud (c_planes[i]);
+            feature_extractor.setInputCloud (plane_vec[i]);
             feature_extractor.compute ();
+            feature_extractor.getMomentOfInertia (moment_of_inertia);
             feature_extractor.getOBB (min_point_OBB, max_point_OBB, position_OBB, rotational_matrix_OBB);
             Eigen::Vector3f position (position_OBB.x, position_OBB.y, position_OBB.z);
             Eigen::Quaternionf quat (rotational_matrix_OBB);
-            viewer->addCube (position, quat, max_point_OBB.x - min_point_OBB.x, max_point_OBB.y - min_point_OBB.y, max_point_OBB.z - min_point_OBB.z, "OBB"+convert.str());
-            viewer->addPointCloud(c_planes[i], single_color, convert.str());
-            f = pcl::calculatePolygonArea(*hulls[i]);
-            std::cout << "Hull area: " << f;
-            std::cout << "cube area: " << getBiggestCubeArea(min_point_OBB, max_point_OBB) << std::endl;
-        }   
-        r = rand () % 155;
-        g = rand () % 155;
-        b = rand () % 155;
-        pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (extractor.getCloud(), r,g,b);
-        viewer->addPointCloud(extractor.getCloud(), single_color, "rest");
+            if( i == pos ){
+                viewer->addCube (position, quat, max_point_OBB.x - min_point_OBB.x, max_point_OBB.y - min_point_OBB.y, max_point_OBB.z - min_point_OBB.z, "OBB"+convert.str());
+            }
+            // viewer->addPointCloud(plane_vec[i], single_color, convert.str());
+            pDescriptor.momentOfInertia = moment_of_inertia;
+            getBiggestCubeArea(min_point_OBB, max_point_OBB, &area, &wlRatio);
+            pDescriptor.boundingBoxArea = area;
+            pDescriptor.hullArea = double( pcl::calculatePolygonArea(*hulls[i]) );
+            pDescriptor.hullBoundingBoxRatio = pDescriptor.hullArea / pDescriptor.boundingBoxArea;
+            pDescriptor.widthLengthRatio = wlRatio;
+            Eigen::VectorXd data;
+            extracted.at(i)->shape_data(data); 
+            normal = data.segment<4>(0);
+            pDescriptor.normal = normal;
+            vPlaneDescriptor.push_back(pDescriptor);
+        }  
+
+
+        int red;
+        int green;
+        int blue;
+        int j = 0;
+        double eDist;
+        std::vector<double> vDescriptor;
+        for (auto i : vPlaneDescriptor){
+            eDist = 0;
+            vDescriptor.clear();
+            // Check distance 
+            vDescriptor.push_back( std::log( vPlaneDescriptor.at(pos).boundingBoxArea ) - std::log( i.boundingBoxArea ));
+            vDescriptor.push_back( std::log( vPlaneDescriptor.at(pos).hullArea ) - std::log( i.hullArea ));
+            vDescriptor.push_back( std::log( vPlaneDescriptor.at(pos).hullBoundingBoxRatio ) - std::log( i.hullBoundingBoxRatio ));
+            vDescriptor.push_back( std::log( vPlaneDescriptor.at(pos).widthLengthRatio ) - std::log( i.widthLengthRatio ));
+            vDescriptor.push_back( std::log( angleBetweenVectors( vPlaneDescriptor.at(pos).normal, i.normal )));
+            for (auto j : vDescriptor){
+                eDist += j * j;
+                std::cout << ", " << j*j;
+            }
+            std::cout << "" << std::endl;
+            eDist = std::sqrt( eDist );
+            std::cout << "eDist: " << eDist << std::endl;
+            getValueBetweenTwoFixedColors(eDist, &red, &green, &blue);
+            pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (plane_vec[j], red,green,blue);
+            convert << j;
+            viewer->addPointCloud(plane_vec[j], single_color, convert.str());
+            j++;
+        }
+
         while(!viewer->wasStopped())
         {
             viewer->spinOnce (100);
@@ -233,17 +268,54 @@ public:
 
 private:
 
-    double getBiggestCubeArea(PointT minPoint, PointT maxPoint){
+
+
+    // Takes in two vectors, returns angle between them in range 0 to 1  
+    // where 1 means no difference, pi/2 is cnsidered maximum angle and pi as 0.
+    double angleBetweenVectors(Eigen::Vector4d a, Eigen::Vector4d b){
+        Eigen::Vector3d a3 ( a[1]/a[4], a[3]/a[4], a[3]/a[4] );
+
+        double ang = std::acos( a.dot(b) ); 
+        if ( std::isnan(ang) ){
+            return 0;
+        } else {
+            return std::abs(ang - M_PI/2 );
+        }
+    }
+
+    void getValueBetweenTwoFixedColors(double value, int *red, int *green, int *blue)
+    {
+        if (value > 10.0 && value == INFINITY){ 
+            value = 1.0; 
+        } else {
+            value = value / 10.0;
+        }
+
+        int aR = 0;   int aG = 0; int aB=255;  // RGB for our 1st color (blue in this case).
+        int bR = 255; int bG = 0; int bB=0;    // RGB for our 2nd color (red in this case).
+
+        *red   = double(bR - aR) * value + aR;      // Evaluated as -255*value + 255.
+        *green = double(bG - aG) * value + aG;      // Evaluates as 0.
+        *blue  = double(bB - aB) * value + aB;      // Evaluates as 255*value + 0.
+    }
+
+    void getBiggestCubeArea(PointT minPoint, PointT maxPoint, double *area, double *WLRatio){
         double x = maxPoint.x - minPoint.x;
         double y = maxPoint.y - minPoint.y;
         double z = maxPoint.z - minPoint.z;
         if (x > z && y > z){
-            return x*y;
+            *area = x*y;
+            *WLRatio = x/y;
         } else if (x > y && z > y) {
-            return x*z;
+            *area = x*z;
+            *WLRatio = x/z;
         }
         else {
-            return y*z;
+            *area = y*z;
+            *WLRatio = y/z;
+        }
+        if( *WLRatio > 1 ){
+            *WLRatio = 1 / *WLRatio;
         }
     }
 
