@@ -12,11 +12,13 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <ransac_primitives/primitive_core.h>
 #include <ransac_primitives/plane_primitive.h>
+#include <simple_xml_parser.h>
 #include <pcl/common/centroid.h>
 #include <pcl/common/transforms.h>
 // OTHER
 #include <pcl/console/parse.h>
 #include <Eigen/Dense>
+#include <complex>
 #include <vector>
 #include <stdlib.h>
 #include <time.h>
@@ -77,7 +79,10 @@ public:
 
         PointCloudT::Ptr cloud (new PointCloudT ());
         PointCloudT::Ptr cloud_f (new PointCloudT ());
-        pcl::io::loadPCDFile (cloudPath, *cloud);
+        // pcl::io::loadPCDFile (cloudPath, *cloud);
+
+        auto sweep = SimpleXMLParser<PointT>::loadRoomFromXML("/home/unnar/catkin_ws/src/Metarooms/room_2/room.xml");
+        cloud = sweep.vIntermediateRoomClouds[43];
         pcl::io::savePCDFileBinary (savePath + "input_cloud.pcd", *cloud);
 
         std::vector<int> indices;
@@ -267,22 +272,26 @@ public:
     }
 
 private:
-
-
-
     // Takes in two vectors, returns angle between them in range 0 to 1  
     // where 1 means no difference, pi/2 is cnsidered maximum angle and pi as 0.
     double angleBetweenVectors(Eigen::Vector4d a, Eigen::Vector4d b){
-        Eigen::Vector3d a3 ( a[1]/a[4], a[3]/a[4], a[3]/a[4] );
+        if (a == b) { return 1; }
+        
+        // Norm the vectors before calculation.
+        a = a / a.squaredNorm();
+        b = b / b.squaredNorm();
 
         double ang = std::acos( a.dot(b) ); 
+        // Shift it around to return 1 for 0 degrees and 0 for 45 degrees.
         if ( std::isnan(ang) ){
-            return 0;
+            return 1;
         } else {
-            return std::abs(ang - M_PI/2 );
+            return std::abs( (ang - M_PI/2) / (M_PI/2) );
         }
     }
 
+    // Returns RGB value from red to green depending on value, low value results in blue,
+    // high value results in red.
     void getValueBetweenTwoFixedColors(double value, int *red, int *green, int *blue)
     {
         if (value > 10.0 && value == INFINITY){ 
