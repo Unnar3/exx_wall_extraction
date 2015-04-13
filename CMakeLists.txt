@@ -35,6 +35,6 @@ include_directories(moment_of_inertia ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR
 
 
 add_executable(plane_test src/plane_test.cpp)
-target_link_libraries(plane_test ${catkin_LIBRARIES} ${QT_LIBRARIES} compression libvtkCommon.so libvtkFiltering.so libvtkGraphics.so)
+target_link_libraries(plane_test ${catkin_LIBRARIES} ${QT_LIBRARIES} compression features libvtkCommon.so libvtkFiltering.so libvtkGraphics.so)
 #add_executable(plane_compression src/plane_compression.cpp)
 #target_link_libraries(plane_compression ${catkin_LIBRARIES} libvtkCommon.so libvtkFiltering.so libvtkGraphics.so)

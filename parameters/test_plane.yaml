@@ -1,7 +1,7 @@
 {
 printParameters         : true,
 savePath                : "/home/unnar/catkin_ws/src/exx_wall_extraction/run/",
-cloudPath               : "/home/unnar/catkin_ws/src/Metarooms/room_2/intermediate_cloud0043.pcd",
+cloudPath               : "/home/unnar/catkin_ws/src/Metarooms/room_3/intermediate_cloud0007.pcd",
 VoxelResolution         : 0.015,
 SVVoxelResolution       : 0.02,
 SVSeedResolution        : 0.3,
