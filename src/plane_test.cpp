@@ -1,4 +1,5 @@
 #include <ros/ros.h>
+#include <pcl_ros/transforms.h>
 #include <exx_compression/compression.h>
 #include <plane_features/plane_features.h>
 // PCL specific includes
@@ -10,11 +11,13 @@
 #include <pcl/point_types.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include "moment_of_inertia_estimation.h"
+#include "color_gradient.h"
 #include <pcl/visualization/cloud_viewer.h>
 #include <ransac_primitives/primitive_core.h>
 #include <ransac_primitives/plane_primitive.h>
 #include <simple_xml_parser.h>
 #include <pcl/common/centroid.h>
+#include <pcl/filters/passthrough.h>
 #include <pcl/common/transforms.h>
 // OTHER
 #include <pcl/console/parse.h>
@@ -80,23 +83,41 @@ public:
 
         PointCloudT::Ptr cloud (new PointCloudT ());
         PointCloudT::Ptr cloud_f (new PointCloudT ());
-        // pcl::io::loadPCDFile (cloudPath, *cloud);
+        pcl::io::loadPCDFile (cloudPath, *cloud);
 
-        auto sweep = SimpleXMLParser<PointT>::loadRoomFromXML("/home/unnar/catkin_ws/src/Metarooms/room_3/room.xml");
-        cloud = sweep.vIntermediateRoomClouds[7];
-        pcl::io::savePCDFileBinary (savePath + "input_cloud.pcd", *cloud);
+        // Create the filtering object
+        // pcl::PassThrough<PointT> pass;
+        // pass.setInputCloud (cloud);
+        // pass.setFilterFieldName ("y");
+        // pass.setFilterLimits (-2.5, -0.5);
+        // pass.filter (*cloud);
+        // pass.setInputCloud (cloud);
+        // pass.setFilterFieldName ("z");
+        // pass.setFilterLimits (0.2, 0.8);
+        // pass.filter (*cloud);
+        // pass.setInputCloud (cloud);
+        // pass.setFilterFieldName ("x");
+        // pass.setFilterLimits (1.2, 5.3);
+        // pass.filter (*cloud);
+        pcl::io::savePCDFileBinary (savePath + "pass_cloud.pcd", *cloud);
+        
+        // auto sweep = SimpleXMLParser<PointT>::loadRoomFromXML("/home/unnar/catkin_ws/src/Metarooms/room_3/room.xml");
+        // cloud = sweep.vIntermediateRoomClouds[7];
+        // tf::StampedTransform rotationTF = sweep.vIntermediateRoomCloudTransforms[7];
+        // pcl_ros::transformPointCloud(*cloud, *cloud, rotationTF);
 
-        std::vector<int> indices;
-        pcl::removeNaNFromPointCloud(*cloud, *cloud, indices);
+        // std::vector<int> indices;
+        // pcl::removeNaNFromPointCloud(*cloud, *cloud, indices);
 
-        std::vector<base_primitive*> primitives = { new plane_primitive() };
+        
 
-        Eigen::Vector4f centroid;
-        pcl::compute3DCentroid(*cloud, centroid);
-        Eigen::Matrix4f transformFromOrigin = Eigen::Affine3f(Eigen::Translation3f( Eigen::Vector3f(centroid(0),centroid(1),centroid(2)))).matrix();
-        Eigen::Matrix4f transformToOrigin = transformFromOrigin.inverse();
-        pcl::transformPointCloud (*cloud, *cloud, transformToOrigin);
-        cout<<"transformed to origin"<<endl;
+        // Eigen::Vector4f centroid;
+        // pcl::compute3DCentroid(*cloud, centroid);
+        // Eigen::Matrix4f transformFromOrigin = Eigen::Affine3f(Eigen::Translation3f( Eigen::Vector3f(centroid(0),centroid(1),centroid(2)))).matrix();
+        // Eigen::Matrix4f transformToOrigin = transformFromOrigin.inverse();
+        // pcl::transformPointCloud (*cloud, *cloud, transformToOrigin);
+        // cout<<"transformed to origin"<<endl;
+        // pcl::io::savePCDFileBinary (savePath + "input_cloud.pcd", *cloud);
 
         // Create the filtering object
         // pcl::StatisticalOutlierRemoval<PointT> sor;
@@ -129,16 +150,17 @@ public:
         primitive_params params;
         params.number_disjoint_subsets = 10;
         params.octree_res = 2.0;
-        params.normal_neigbourhood = 0.2;
-        params.inlier_threshold = 0.1;
+        params.normal_neigbourhood = 0.10;
+        params.inlier_threshold = 0.2;
         params.angle_threshold = 0.3;
         params.add_threshold = 0.01;
-        params.min_shape = cloud->points.size()*0.0001;
+        params.min_shape = cloud->points.size()*0.00001;
         params.inlier_min = params.min_shape;
         params.connectedness_res = 0.06;
         params.distance_threshold = 0.0;
 
         //primitive_visualizer<pcl::PointXYZRGB> viewer;
+        std::vector<base_primitive*> primitives = { new plane_primitive() };
         primitive_extractor<PointT> extractor(voxel_cloud, primitives, params, NULL);
         std::vector<base_primitive*> extracted;
         extractor.extract(extracted);
@@ -162,15 +184,21 @@ public:
         // pcl::io::savePCDFileBinary (savePath + "maybe_plane.pcd", *test_cloud);  
         // cmprs.extractPlanesRANSAC(voxel_cloud, &pac);
         // cmprs.projectToPlane(&pac);
-        // cmprs.euclideanClusterPlanes(&plane_vec, &c_planes);
-        cmprs.planeToConcaveHull(&plane_vec, &hulls);
+        std::vector<int> normalInd;
+        cmprs.euclideanClusterPlanes(&plane_vec, &c_planes, &normalInd);
+        cmprs.planeToConcaveHull(&c_planes, &hulls);
         cmprs.reumannWitkamLineSimplification( &hulls, &simplified_hulls);
-        cmprs.superVoxelClustering(&plane_vec, &super_planes);
-        cmprs.greedyProjectionTriangulationPlanes(voxel_cloud, &super_planes, &simplified_hulls, &cm);
+        // cmprs.superVoxelClustering(&plane_vec, &super_planes);
+        // cmprs.greedyProjectionTriangulationPlanes(voxel_cloud, &super_planes, &simplified_hulls, &cm);
         
         std::vector<EXX::planeDescriptor> vPlaneDescriptor;
-        EXX::planeFeatures::calculateFeatures(plane_vec, hulls, normal, &vPlaneDescriptor);
+        // for (size_t i = 0; i < plane_vec.size(); ++i){
+        //     normalInd.push_back(i);
+        // }
+        std::cout << "calculating features" << std::endl;
+        EXX::planeFeatures::calculateFeatures(c_planes, simplified_hulls, normal, normalInd, &vPlaneDescriptor);
         std::vector<std::set<int> > sets;
+        std::cout << "matching features" << std::endl;
         EXX::planeFeatures::matchSimilarFeatures(vPlaneDescriptor, &sets);
         
         boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
@@ -178,117 +206,21 @@ public:
         viewer->addCoordinateSystem (1.0);
         viewer->initCameraParameters ();
 
+        ColorGradient cGrad(5);
         int r,g,b;
-        for (size_t i = 0; i < plane_vec.size(); ++i){
-            int sets_s = sets.size()+1;
-            std::cout << "set size: " << sets_s << std::endl;
-            getValueBetweenTwoFixedColors(1, &r, &g, &b);
+        for (size_t i = 0; i < c_planes.size(); ++i){
+            double sets_s = sets.size()+1;
+            cGrad.getColorAtValue(1, r, g, b);
             for (size_t j = 0; j < sets.size(); ++j){
                 if ( sets.at(j).count(i) ){
-                    std::cout << "j: " << j << std::endl;
-                    getValueBetweenTwoFixedColors(j/sets_s, &r, &g, &b);
+                    cGrad.getColorAtValue(double(j+1)/sets_s, r, g, b);
                     break;
                 }
             }
 
-            pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (plane_vec[i], r,g,b);
-            viewer->addPointCloud(plane_vec[i], single_color, std::to_string(i));   
+            pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], r,g,b);
+            viewer->addPointCloud(c_planes[i], single_color, std::to_string(i));   
         }
-        
-
-
-        // PointCloudT::Ptr colored_cloud (new PointCloudT ());
-        // PointCloudT::Ptr tmp_cloud (new PointCloudT ());
-        // int r, g, b;
-        // for (size_t i = 0; i < plane_vec.size(); ++i){
-        //     *tmp_cloud = *plane_vec[i] + *simplified_hulls[i];
-        //     r = rand () % 155;
-        //     g = rand () % 155;
-        //     b = rand () % 155;
-        //     for (size_t j = 0; j < tmp_cloud->points.size(); ++j){
-        //         tmp_cloud->points[j].r = r;
-        //         tmp_cloud->points[j].g = g;
-        //         tmp_cloud->points[j].b = b;
-        //     }
-        //     *colored_cloud += *tmp_cloud;
-        // }
-
-        // pcl::io::savePCDFileASCII (savePath + "colored_cloud.pcd", *colored_cloud);
-
-        // Nýtt test
-        // pcl::PointCloud<PointT>::Ptr cloud22 (new pcl::PointCloud<PointT> ());
-        // pcl::MomentOfInertiaEstimation<PointT> feature_extractor;
-        // PointT min_point_OBB;
-        // PointT max_point_OBB;
-        // PointT position_OBB;
-        // Eigen::Matrix3f rotational_matrix_OBB;  
-        // std::vector<float> moment_of_inertia;
-
-       
-        // boost::shared_ptr<pcl::visualization::PCLVisualizer> customColourVis (pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud);
-        // ostringstream convert;   
-
-        // std::vector<planeDescriptor> vPlaneDescriptor;
-        // planeDescriptor pDescriptor;
-        // double area;
-        // double wlRatio;
-        // int pos = 3;
-        // srand (time(NULL));
-        // for (auto i = 0; i < plane_vec.size(); ++i){
-        //     // r = rand () % 155;
-        //     // g = rand () % 155;
-        //     // b = rand () % 155;
-        //     // pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (plane_vec[i], r,g,b);
-        //     convert << i;
-        //     feature_extractor.setInputCloud (plane_vec[i]);
-        //     feature_extractor.compute ();
-        //     feature_extractor.getMomentOfInertia (moment_of_inertia);
-        //     feature_extractor.getOBB (min_point_OBB, max_point_OBB, position_OBB, rotational_matrix_OBB);
-        //     Eigen::Vector3f position (position_OBB.x, position_OBB.y, position_OBB.z);
-        //     Eigen::Quaternionf quat (rotational_matrix_OBB);
-        //     if( i == pos ){
-        //         viewer->addCube (position, quat, max_point_OBB.x - min_point_OBB.x, max_point_OBB.y - min_point_OBB.y, max_point_OBB.z - min_point_OBB.z, "OBB"+convert.str());
-        //     }
-        //     // viewer->addPointCloud(plane_vec[i], single_color, convert.str());
-        //     pDescriptor.momentOfInertia = moment_of_inertia;
-        //     getBiggestCubeArea(min_point_OBB, max_point_OBB, &area, &wlRatio);
-        //     pDescriptor.boundingBoxArea = area;
-        //     pDescriptor.hullArea = double( pcl::calculatePolygonArea(*hulls[i]) );
-        //     pDescriptor.hullBoundingBoxRatio = pDescriptor.hullArea / pDescriptor.boundingBoxArea;
-        //     pDescriptor.widthLengthRatio = wlRatio;
-        //     pDescriptor.normal = normal.at(i);
-        //     vPlaneDescriptor.push_back(pDescriptor);
-        // }  
-
-
-        // int red;
-        // int green;
-        // int blue;
-        // int j = 0;
-        // double eDist;
-        // std::vector<double> vDescriptor;
-        // for (auto i : vPlaneDescriptor){
-        //     eDist = 0;
-        //     vDescriptor.clear();
-        //     // Check distance 
-        //     vDescriptor.push_back( std::log( vPlaneDescriptor.at(pos).boundingBoxArea ) - std::log( i.boundingBoxArea ));
-        //     vDescriptor.push_back( std::log( vPlaneDescriptor.at(pos).hullArea ) - std::log( i.hullArea ));
-        //     vDescriptor.push_back( std::log( vPlaneDescriptor.at(pos).hullBoundingBoxRatio ) - std::log( i.hullBoundingBoxRatio ));
-        //     vDescriptor.push_back( std::log( vPlaneDescriptor.at(pos).widthLengthRatio ) - std::log( i.widthLengthRatio ));
-        //     vDescriptor.push_back( std::log( angleBetweenVectors( vPlaneDescriptor.at(pos).normal, i.normal )));
-        //     for (auto j : vDescriptor){
-        //         eDist += j * j;
-        //         std::cout << ", " << j*j;
-        //     }
-        //     std::cout << "" << std::endl;
-        //     eDist = std::sqrt( eDist );
-        //     std::cout << "eDist: " << eDist << std::endl;
-        //     getValueBetweenTwoFixedColors(eDist, &red, &green, &blue);
-        //     pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (plane_vec[j], red,green,blue);
-        //     convert << j;
-        //     viewer->addPointCloud(plane_vec[j], single_color, convert.str());
-        //     j++;
-        // }
 
         while(!viewer->wasStopped())
         {
@@ -320,18 +252,27 @@ private:
     // high value results in red.
     void getValueBetweenTwoFixedColors(double value, int *red, int *green, int *blue)
     {
-        // if (value > 10.0 && value == INFINITY){ 
-        //     value = 1.0; 
-        // } else {
-        //     value = value / 10.0;
-        // }
+        const int NUM_COLORS = 4;
+        static float color[NUM_COLORS][3] = { {0,0,255}, {0,255,0}, {255,255,0}, {255,0,0} };
+        // A static array of 4 colors:  (blue,   green,  yellow,  red) using {r,g,b} for each.
 
-        int aR = 0;   int aG = 0; int aB=255;  // RGB for our 1st color (blue in this case).
-        int bR = 255; int bG = 0; int bB=0;    // RGB for our 2nd color (red in this case).
+        int idx1;        // |-- Our desired color will be between these two indexes in "color".
+        int idx2;        // |
+        float fractBetween = 0;  // Fraction between "idx1" and "idx2" where our value is.
 
-        *red   = double(bR - aR) * value + aR;      // Evaluated as -255*value + 255.
-        *green = double(bG - aG) * value + aG;      // Evaluates as 0.
-        *blue  = double(bB - aB) * value + aB;      // Evaluates as 255*value + 0.
+        if(value <= 0)      {  idx1 = idx2 = 0;            }    // accounts for an input <=0
+        else if(value >= 1)  {  idx1 = idx2 = NUM_COLORS-1; }    // accounts for an input >=0
+        else
+        {
+            value = value * (NUM_COLORS-1);        // Will multiply value by 3.
+            idx1  = floor(value);                  // Our desired color will be after this index.
+            idx2  = idx1+1;                        // ... and before this index (inclusive).
+            fractBetween = value - float(idx1);    // Distance between the two indexes (0-1).
+        }
+
+        *red   = (color[idx2][0] - color[idx1][0])*fractBetween + color[idx1][0];
+        *green = (color[idx2][1] - color[idx1][1])*fractBetween + color[idx1][1];
+        *blue  = (color[idx2][2] - color[idx1][2])*fractBetween + color[idx1][2];
     }
 
     void getBiggestCubeArea(PointT minPoint, PointT maxPoint, double *area, double *WLRatio){
