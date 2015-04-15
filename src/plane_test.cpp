@@ -89,7 +89,7 @@ public:
         // pcl::PassThrough<PointT> pass;
         // pass.setInputCloud (cloud);
         // pass.setFilterFieldName ("y");
-        // pass.setFilterLimits (-2.5, -0.5);
+        // pass.setFilterLimits (-3.0, -0.0);
         // pass.filter (*cloud);
         // pass.setInputCloud (cloud);
         // pass.setFilterFieldName ("z");
@@ -150,9 +150,9 @@ public:
         primitive_params params;
         params.number_disjoint_subsets = 10;
         params.octree_res = 2.0;
-        params.normal_neigbourhood = 0.10;
+        params.normal_neigbourhood = 0.15;
         params.inlier_threshold = 0.2;
-        params.angle_threshold = 0.3;
+        params.angle_threshold = 0.5;
         params.add_threshold = 0.01;
         params.min_shape = cloud->points.size()*0.00001;
         params.inlier_min = params.min_shape;
@@ -177,7 +177,6 @@ public:
             for (size_t i = 0; i < ind.size(); ++i){
                 test_cloud->points.push_back(voxel_cloud->points[ind[i]]);
             }
-            std::cout << "pushing" << std::endl;
             plane_vec.push_back(test_cloud);
         }
         
@@ -195,26 +194,44 @@ public:
         // for (size_t i = 0; i < plane_vec.size(); ++i){
         //     normalInd.push_back(i);
         // }
-        std::cout << "calculating features" << std::endl;
-        EXX::planeFeatures::calculateFeatures(c_planes, simplified_hulls, normal, normalInd, &vPlaneDescriptor);
-        std::vector<std::set<int> > sets;
-        std::cout << "matching features" << std::endl;
-        EXX::planeFeatures::matchSimilarFeatures(vPlaneDescriptor, &sets);
         
         boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
         viewer->setBackgroundColor (0, 0, 0);
         viewer->addCoordinateSystem (1.0);
         viewer->initCameraParameters ();
 
+        std::cout << "calculating features" << std::endl;
+        EXX::planeFeatures features;
+        features.calculateFeatures(c_planes, simplified_hulls, normal, normalInd, &vPlaneDescriptor);
+        std::vector<std::set<int> > sets;
+        std::cout << "matching features" << std::endl;
+        features.matchSimilarFeatures(vPlaneDescriptor, &sets);
+        
+
         ColorGradient cGrad(5);
         int r,g,b;
         for (size_t i = 0; i < c_planes.size(); ++i){
             double sets_s = sets.size()+1;
-            cGrad.getColorAtValue(1, r, g, b);
+            // cGrad.getColorAtValue(1, r, g, b);
+            r = 208;
+            g = 28;
+            b = 139;
             for (size_t j = 0; j < sets.size(); ++j){
                 if ( sets.at(j).count(i) ){
-                    cGrad.getColorAtValue(double(j+1)/sets_s, r, g, b);
-                    break;
+                    if ( j == sets.size()-1){
+                        r = 233;
+                        g = 163;
+                        b = 201;
+                    }
+                    else if ( j == sets.size()-2 ) {
+                        r = 90;
+                        g = 180;
+                        b = 172;
+                    }
+                    else{
+                        cGrad.getColorAtValue(double(j+1)/sets_s, r, g, b);
+                        break;
+                    }
                 }
             }
 

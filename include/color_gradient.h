@@ -44,11 +44,11 @@ public:
       color.push_back(ColorPoint(1, 0, 0,   1.0f));      // Red.
     }
     else if ( i == 5 ){
-      color.push_back(ColorPoint(0, 0, 1,   0.0f));      // Blue.
-      color.push_back(ColorPoint(0, 1, 1,   0.25f));     // Cyan.
-      color.push_back(ColorPoint(0, 1, 0,   0.5f));      // Green.
-      color.push_back(ColorPoint(1, 1, 0,   0.75f));     // Yellow.
-      color.push_back(ColorPoint(1, 0, 0,   1.0f));      // Red.
+      color.push_back(ColorPoint(0.843, 0.098, 0.110,   0.0f));      // Blue.
+      color.push_back(ColorPoint(0.902, 0.380, 0.004,   0.25f));     // Cyan.
+      color.push_back(ColorPoint(1.000, 1.000, 0.749,   0.5f));      // Green.
+      color.push_back(ColorPoint(0.302, 0.675, 0.149,   0.75f));     // Yellow.
+      color.push_back(ColorPoint(0.173, 0.482, 0.714,   1.0f));      // Red.
     }
     else{
       std::cout << "Number of colors not defined, Options are 2, 3 or 5, using 3." << std::endl;

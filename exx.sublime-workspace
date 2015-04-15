@@ -4,6 +4,10 @@
 		"selected_items":
 		[
 			[
+				"planeF",
+				"plane_features"
+			],
+			[
 				"normal",
 				"normalInd"
 			],
@@ -387,7 +391,7 @@
 			"file": "src/plane_test.cpp",
 			"settings":
 			{
-				"buffer_size": 13217,
+				"buffer_size": 13408,
 				"line_ending": "Unix"
 			}
 		},
@@ -395,7 +399,7 @@
 			"file": "include/color_gradient.h",
 			"settings":
 			{
-				"buffer_size": 3179,
+				"buffer_size": 3239,
 				"line_ending": "Unix"
 			}
 		},
@@ -642,6 +646,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"cout",
 			"primitives",
 			"extracted",
 			"InputA",
@@ -779,15 +784,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 13217,
+						"buffer_size": 13408,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								5448,
-								5448
+								2519,
+								2519
 							]
 						],
 						"settings":
@@ -856,7 +861,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 3363.0,
+						"translation.y": 1375.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -868,15 +873,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 3179,
+						"buffer_size": 3239,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1592,
-								1592
+								2368,
+								2368
 							]
 						],
 						"settings":
@@ -946,7 +951,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 342.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 2,
@@ -965,8 +970,8 @@
 						"selection":
 						[
 							[
-								198,
-								198
+								392,
+								392
 							]
 						],
 						"settings":
@@ -1036,7 +1041,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 3,
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
@@ -1124,7 +1129,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 3,
 					"type": "text"
 				},
 				{
