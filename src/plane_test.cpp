@@ -86,19 +86,19 @@ public:
         pcl::io::loadPCDFile (cloudPath, *cloud);
 
         // Create the filtering object
-        // pcl::PassThrough<PointT> pass;
-        // pass.setInputCloud (cloud);
-        // pass.setFilterFieldName ("y");
-        // pass.setFilterLimits (-3.0, -0.0);
-        // pass.filter (*cloud);
+        pcl::PassThrough<PointT> pass;
+        pass.setInputCloud (cloud);
+        pass.setFilterFieldName ("y");
+        pass.setFilterLimits (-2.5, -1.0);
+        pass.filter (*cloud);
         // pass.setInputCloud (cloud);
         // pass.setFilterFieldName ("z");
         // pass.setFilterLimits (0.2, 0.8);
         // pass.filter (*cloud);
-        // pass.setInputCloud (cloud);
-        // pass.setFilterFieldName ("x");
-        // pass.setFilterLimits (1.2, 5.3);
-        // pass.filter (*cloud);
+        pass.setInputCloud (cloud);
+        pass.setFilterFieldName ("x");
+        pass.setFilterLimits (1.2, 5.3);
+        pass.filter (*cloud);
         pcl::io::savePCDFileBinary (savePath + "pass_cloud.pcd", *cloud);
         
         // auto sweep = SimpleXMLParser<PointT>::loadRoomFromXML("/home/unnar/catkin_ws/src/Metarooms/room_3/room.xml");
@@ -154,7 +154,7 @@ public:
         params.inlier_threshold = 0.2;
         params.angle_threshold = 0.5;
         params.add_threshold = 0.01;
-        params.min_shape = cloud->points.size()*0.00001;
+        params.min_shape = cloud->points.size()*0.0001;
         params.inlier_min = params.min_shape;
         params.connectedness_res = 0.06;
         params.distance_threshold = 0.0;
@@ -206,38 +206,74 @@ public:
         std::vector<std::set<int> > sets;
         std::cout << "matching features" << std::endl;
         features.matchSimilarFeatures(vPlaneDescriptor, &sets);
+        std::vector< std::set<int>> objects;
+        features.findRepeatingObjects(c_planes, vPlaneDescriptor, sets, &objects);
         
 
         ColorGradient cGrad(5);
         int r,g,b;
-        for (size_t i = 0; i < c_planes.size(); ++i){
-            double sets_s = sets.size()+1;
-            // cGrad.getColorAtValue(1, r, g, b);
-            r = 208;
-            g = 28;
-            b = 139;
-            for (size_t j = 0; j < sets.size(); ++j){
-                if ( sets.at(j).count(i) ){
-                    if ( j == sets.size()-1){
-                        r = 233;
-                        g = 163;
-                        b = 201;
-                    }
-                    else if ( j == sets.size()-2 ) {
-                        r = 90;
-                        g = 180;
-                        b = 172;
-                    }
-                    else{
-                        cGrad.getColorAtValue(double(j+1)/sets_s, r, g, b);
-                        break;
-                    }
+
+        // for (auto i : sets){
+        //     for (auto j : i){
+        //         pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[j], 255,0,0);
+        //         viewer->addPointCloud(c_planes[j], single_color, std::to_string(j)); 
+        //     }
+        //     for (size_t k = 0; k < 50; ++k){
+        //         viewer->spinOnce (100);
+        //     }
+        //     for (auto j : i){
+        //         viewer->removePointCloud(std::to_string(j)); 
+        //     }
+
+        // }
+
+        for ( size_t i = 0; i < objects.size(); ++i ){
+            cGrad.getColorAtValue(double(i)/double(objects.size()), r, g, b);
+            for (auto j : objects[i]){
+                for (auto k : sets[j]){
+                    pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[k], r,g,b);
+                    viewer->addPointCloud(c_planes[k], single_color, std::to_string(i) + std::to_string(j)+ std::to_string(k));
                 }
             }
-
-            pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], r,g,b);
-            viewer->addPointCloud(c_planes[i], single_color, std::to_string(i));   
         }
+
+        // double sets_s = sets.size()+1;
+        // bool includeWalls = true;
+        // for (size_t i = 0; i < c_planes.size(); ++i){
+            
+        //     // cGrad.getColorAtValue(1, r, g, b);
+        //     // Not part of a set
+            
+        //     r = 208;
+        //     g = 28;
+        //     b = 139;
+        //     for (size_t j = 0; j < sets.size(); ++j){
+        //         if ( sets.at(j).count(i) ){
+        //             if ( j == sets.size()-1){ // walls
+        //                 r = 233;
+        //                 g = 163;
+        //                 b = 201;
+        //                 includeWalls = false;
+        //             }
+        //             else if ( j == sets.size()-2 ) { // floor
+        //                 r = 90;
+        //                 g = 180;
+        //                 b = 172;
+        //                 includeWalls = false;
+        //             }
+        //             else{
+        //                 cGrad.getColorAtValue(double(j+1)/sets_s, r, g, b);
+        //                 break;
+        //             }
+        //         }
+        //     }
+
+        //     if (includeWalls){
+        //         pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], r,g,b);
+        //         viewer->addPointCloud(c_planes[i], single_color, std::to_string(i));   
+        //     }
+        //     includeWalls = true;
+        // }
 
         while(!viewer->wasStopped())
         {

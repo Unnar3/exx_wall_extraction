@@ -4,6 +4,14 @@
 		"selected_items":
 		[
 			[
+				"inclu",
+				"includeWalls"
+			],
+			[
+				"incl",
+				"includeWalls"
+			],
+			[
 				"planeF",
 				"plane_features"
 			],
@@ -391,7 +399,7 @@
 			"file": "src/plane_test.cpp",
 			"settings":
 			{
-				"buffer_size": 13408,
+				"buffer_size": 15152,
 				"line_ending": "Unix"
 			}
 		},
@@ -407,7 +415,7 @@
 			"file": "parameters/test_plane.yaml",
 			"settings":
 			{
-				"buffer_size": 457,
+				"buffer_size": 458,
 				"line_ending": "Unix"
 			}
 		},
@@ -646,6 +654,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"single",
 			"cout",
 			"primitives",
 			"extracted",
@@ -784,15 +793,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 13408,
+						"buffer_size": 15152,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2519,
-								2519
+								8620,
+								8620
 							]
 						],
 						"settings":
@@ -861,7 +870,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 1375.0,
+						"translation.y": 3940.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -954,7 +963,7 @@
 						"translation.y": 342.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
@@ -963,15 +972,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 457,
+						"buffer_size": 458,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								392,
-								392
+								393,
+								393
 							]
 						],
 						"settings":
@@ -1041,7 +1050,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 2,
 					"type": "text"
 				},
 				{
