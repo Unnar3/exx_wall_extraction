@@ -95,10 +95,10 @@ public:
         // pass.setFilterFieldName ("z");
         // pass.setFilterLimits (0.2, 0.8);
         // pass.filter (*cloud);
-        pass.setInputCloud (cloud);
-        pass.setFilterFieldName ("x");
-        pass.setFilterLimits (1.2, 5.3);
-        pass.filter (*cloud);
+        // pass.setInputCloud (cloud);
+        // pass.setFilterFieldName ("x");
+        // pass.setFilterLimits (1.2, 5.3);
+        // pass.filter (*cloud);
         pcl::io::savePCDFileBinary (savePath + "pass_cloud.pcd", *cloud);
         
         // auto sweep = SimpleXMLParser<PointT>::loadRoomFromXML("/home/unnar/catkin_ws/src/Metarooms/room_3/room.xml");
@@ -201,18 +201,58 @@ public:
         viewer->initCameraParameters ();
 
         std::cout << "calculating features" << std::endl;
+
+        std::set<std::set<int> > sets;
+        std::set<int> set;
+
+        flann::Matrix<double> dataset;
+        flann::Matrix<int> indices;
         EXX::planeFeatures features;
-        features.calculateFeatures(c_planes, simplified_hulls, normal, normalInd, &vPlaneDescriptor);
-        std::vector<std::set<int> > sets;
-        std::cout << "matching features" << std::endl;
-        features.matchSimilarFeatures(vPlaneDescriptor, &sets);
-        std::vector< std::set<int>> objects;
-        features.findRepeatingObjects(c_planes, vPlaneDescriptor, sets, &objects);
+        features.loadFeatures(c_planes, normal, normalInd, dataset);
+        features.matchFeatures(dataset, indices);
+        std::cout << "indices for plane 1" << std::endl;
+        for (size_t j = 0; j < indices.rows; ++j){
+            for (size_t i = 0; i < indices.cols; ++i){
+                if ( indices[j][i] == -1 ){ break; }
+                set.insert( indices[j][i] );
+                std::cout << indices[j][i] << ", ";
+            }
+            sets.insert(set);
+            set.clear();
+            std::cout << "" << std::endl;
+            std::cout << "" << std::endl;
+        }
+        std::cout << "hmmm" << std::endl;
+        std::cout << "haha" << std::endl;
+
+        for ( auto i : sets ){
+            for( auto j : i ){
+                std::cout << j << " ";
+            }
+            std::cout << " " << std::endl;
+            std::cout << " " << std::endl;
+        }
+        
+
+        // features.calculateFeatures(c_planes, simplified_hulls, normal, normalInd, &vPlaneDescriptor);
+        // std::vector<std::set<int> > sets;
+        // std::cout << "matching features" << std::endl;
+        // features.matchSimilarFeatures(vPlaneDescriptor, &sets);
+        // std::vector< std::set<int>> objects;
+        // features.findRepeatingObjects(c_planes, vPlaneDescriptor, sets, &objects);
         
 
         ColorGradient cGrad(5);
         int r,g,b;
 
+        for( auto j : sets ){  
+            if (j.size() < 4) { continue; }     
+            for ( auto i : j ){
+                cGrad.getColorAtValue(double(i)/double(sets.size()), r, g, b);
+                pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], r,g,b);
+                viewer->addPointCloud(c_planes[i], single_color, std::to_string(i));
+            }
+        }
         // for (auto i : sets){
         //     for (auto j : i){
         //         pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[j], 255,0,0);
@@ -227,15 +267,15 @@ public:
 
         // }
 
-        for ( size_t i = 0; i < objects.size(); ++i ){
-            cGrad.getColorAtValue(double(i)/double(objects.size()), r, g, b);
-            for (auto j : objects[i]){
-                for (auto k : sets[j]){
-                    pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[k], r,g,b);
-                    viewer->addPointCloud(c_planes[k], single_color, std::to_string(i) + std::to_string(j)+ std::to_string(k));
-                }
-            }
-        }
+        // for ( size_t i = 0; i < objects.size(); ++i ){
+        //     cGrad.getColorAtValue(double(i)/double(objects.size()), r, g, b);
+        //     for (auto j : objects[i]){
+        //         for (auto k : sets[j]){
+        //             pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[k], r,g,b);
+        //             viewer->addPointCloud(c_planes[k], single_color, std::to_string(i) + std::to_string(j)+ std::to_string(k));
+        //         }
+        //     }
+        // }
 
         // double sets_s = sets.size()+1;
         // bool includeWalls = true;
@@ -253,13 +293,13 @@ public:
         //                 r = 233;
         //                 g = 163;
         //                 b = 201;
-        //                 includeWalls = false;
+        //                 // includeWalls = false;
         //             }
         //             else if ( j == sets.size()-2 ) { // floor
         //                 r = 90;
         //                 g = 180;
         //                 b = 172;
-        //                 includeWalls = false;
+        //                 // includeWalls = false;
         //             }
         //             else{
         //                 cGrad.getColorAtValue(double(j+1)/sets_s, r, g, b);
@@ -399,6 +439,6 @@ int main(int argc, char **argv) {
 
 
     test.testCompression();
-
+    std::cout << "strange" << std::endl;
     return 0;
 }
