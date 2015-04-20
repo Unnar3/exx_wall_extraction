@@ -1,0 +1,770 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"n",
+				"normal"
+			],
+			[
+				"wl",
+				"widthLengthRatio"
+			],
+			[
+				"hu",
+				"hullBoundingBoxRatio"
+			],
+			[
+				"bou",
+				"boundingBoxArea"
+			],
+			[
+				"hull",
+				"hullDist"
+			],
+			[
+				"bound",
+				"boundingBoxDist"
+			],
+			[
+				"mo",
+				"momentOfInertia"
+			],
+			[
+				"plane",
+				"planeDescriptor"
+			],
+			[
+				"Eigen",
+				"Eigen::Vector3f"
+			],
+			[
+				"push",
+				"push_back"
+			],
+			[
+				"extrac",
+				"extractor"
+			],
+			[
+				"get",
+				"getBiggestCubeArea"
+			],
+			[
+				"Poi",
+				"PointCloudT::Ptr"
+			],
+			[
+				"test",
+				"test_cloud"
+			],
+			[
+				"size",
+				"size_t"
+			],
+			[
+				"Pont",
+				"PointT"
+			],
+			[
+				"moment",
+				"moment_of_inertia"
+			],
+			[
+				"Point",
+				"PointCloudT::Ptr"
+			],
+			[
+				"catkin",
+				"catkin_ws"
+			],
+			[
+				"Vox",
+				"VoxelResolution"
+			],
+			[
+				"vo",
+				"voxel_cloud"
+			],
+			[
+				"super",
+				"super_planes"
+			],
+			[
+				"sup",
+				"super_planes"
+			],
+			[
+				"cloud",
+				"cloud_f"
+			],
+			[
+				"Poin",
+				"PointCloudT::Ptr"
+			],
+			[
+				"st",
+				"stdDev"
+			],
+			[
+				"std",
+				"stdDev"
+			],
+			[
+				"ret",
+				"returnECPlanes"
+			],
+			[
+				"EC",
+				"ECMinClusterSize"
+			],
+			[
+				"color",
+				"colored_cloud"
+			],
+			[
+				"print",
+				"printParameters"
+			],
+			[
+				"type",
+				"typeid"
+			],
+			[
+				"def",
+				"define"
+			],
+			[
+				"save",
+				"savePath"
+			],
+			[
+				"exx",
+				"exx_common_node"
+			],
+			[
+				"sa",
+				"saveMesh"
+			],
+			[
+				"comprs",
+				"compression::saveVTK"
+			],
+			[
+				"triang",
+				"triangulatePlanes"
+			],
+			[
+				"voxe",
+				"voxelGridFilter"
+			],
+			[
+				"inc",
+				"inc	#include \"…\""
+			],
+			[
+				"gp",
+				"gp3_Ksearch_"
+			],
+			[
+				"gp3",
+				"gp3_max_nearest_neighbours_"
+			],
+			[
+				"gp3_",
+				"gp3_min_angle_"
+			],
+			[
+				"rw",
+				"rw_hull_eps_"
+			],
+			[
+				"dis",
+				"dist_thresh_"
+			],
+			[
+				"max",
+				"max_ite_"
+			],
+			[
+				"sv_s",
+				"sv_seed_res_"
+			],
+			[
+				"voxel",
+				"voxel_leaf_size_"
+			],
+			[
+				"V",
+				"VOXEL_LEAF_SIZE"
+			],
+			[
+				"boundar",
+				"boundary_points"
+			],
+			[
+				"new",
+				"new_cloud"
+			],
+			[
+				"closes",
+				"closestInternal"
+			],
+			[
+				"ge",
+				"getCloudSize"
+			],
+			[
+				"set",
+				"setInputCloud"
+			],
+			[
+				"name",
+				"namespace"
+			],
+			[
+				"ind",
+				"ind_loop"
+			],
+			[
+				"Po",
+				"PointCloudT"
+			],
+			[
+				"leaf",
+				"leaf_size"
+			],
+			[
+				"Plana",
+				"PlanarRegT"
+			],
+			[
+				"Plan",
+				"PlanarRegT"
+			],
+			[
+				"min",
+				"min_inliers_"
+			],
+			[
+				"dist",
+				"distance_threshold_"
+			],
+			[
+				"coe",
+				"coeffs"
+			],
+			[
+				"dista",
+				"distance_threshold"
+			],
+			[
+				"model",
+				"ModelCoeffT"
+			],
+			[
+				"cloud_",
+				"cloud_triangle"
+			],
+			[
+				"P",
+				"Ptr"
+			],
+			[
+				"triangles",
+				"triangles_planes"
+			],
+			[
+				"pol",
+				"Polygon"
+			],
+			[
+				"tri",
+				"triangles_planes"
+			],
+			[
+				"file",
+				"filenames"
+			],
+			[
+				"Me",
+				"METAROOM"
+			],
+			[
+				"current",
+				"currentPlane"
+			],
+			[
+				"su",
+				"super_voxel_planes"
+			],
+			[
+				"number",
+				"number_of_planes"
+			],
+			[
+				"inliers",
+				"inliers_vec"
+			],
+			[
+				"inlier",
+				"inliers_vec"
+			],
+			[
+				"j_",
+				"j_nextCheck"
+			],
+			[
+				"j_ne",
+				"j_nextCheck"
+			],
+			[
+				"j",
+				"j_nextCheck"
+			],
+			[
+				"curre",
+				"currentPlane"
+			],
+			[
+				"next",
+				"nextCheck"
+			],
+			[
+				"ne",
+				"nextCheck"
+			],
+			[
+				"point",
+				"pointToLineDistance"
+			],
+			[
+				"CLOUD",
+				"cloud_hull_plane"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 179.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"push",
+				"Git: Push"
+			],
+			[
+				"qu",
+				"Git: Quick Commit"
+			],
+			[
+				"add",
+				"Git: Add..."
+			],
+			[
+				"comm",
+				"Git: Quick Commit"
+			],
+			[
+				"git add",
+				"Git: Add Current File"
+			],
+			[
+				"qui",
+				"Git: Quick Commit"
+			],
+			[
+				"Snippet: ",
+				"Snippet: #!/usr/bin/env"
+			],
+			[
+				"pac",
+				"PackageResourceViewer: Open Resource"
+			],
+			[
+				"packa",
+				"Package Control: Install Package"
+			],
+			[
+				"ad",
+				"Git: Add..."
+			],
+			[
+				"commi",
+				"Git: Quick Commit"
+			],
+			[
+				"com",
+				"Git: Quick Commit"
+			],
+			[
+				"q",
+				"Git: Quick Commit"
+			],
+			[
+				"package",
+				"Package Control: Install Package"
+			],
+			[
+				"pa",
+				"PackageResourceViewer: Extract Package"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
+			],
+			[
+				"gutt",
+				"GitGutter: Show Comparing Against"
+			],
+			[
+				"gutter",
+				"GitGutter: Compare Against Commit"
+			]
+		],
+		"width": 601.0
+	},
+	"console":
+	{
+		"height": 139.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = 'eb2297e1a458f27d836c04bb0cbaf282' + 'd0e7a3098092775ccb37ca9d6b2e4b7d'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/usr/include/pcl-1.7/pcl/common/common.h",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/moment_of_inertia/moment_of_inertia_estimation.hpp",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/moment_of_inertia/moment_of_inertia_estimation.cpp",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/moment_of_inertia/moment_of_inertia_estimation.h",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/package.xml",
+		"/home/unnar/bin/catmake.sh",
+		"/home/unnar/.bash_aliases/bash.aliases",
+		"/home/unnar/bin/setupROS.sh",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/parameters/parameters.json",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/include/euclidian_clustering.h",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/parameters/test_plane.yaml",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/include/compression.cpp",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/include/compression.h",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/CMakeLists.txt",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/test_plane.launch",
+		"/home/unnar/.config/sublime-text-3/Packages/Alignment/Base File.sublime-settings",
+		"/home/unnar/.config/sublime-text-3/Packages/User/Base File.sublime-settings",
+		"/home/unnar/.config/sublime-text-3/Packages/User/JSON.sublime-settings",
+		"/home/unnar/.bash_aliases",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/.gitignore",
+		"/home/unnar/.config/sublime-text-3/Packages/User/cout.sublime-snippet",
+		"/home/unnar/.config/sublime-text-3/Packages/Color Scheme - Default/Monokai.tmTheme",
+		"/home/unnar/catkin_ws/src/rosOgre/include/BaseApplication.h",
+		"/home/unnar/catkin_ws/src/rosOgre/include/PCLfunctions/cloud_generation.h",
+		"/home/unnar/catkin_ws/src/rosOgre/src/BaseApplication.cpp",
+		"/home/unnar/catkin_ws/src/rosOgre/run_from/resources.cfg",
+		"/home/unnar/catkin_ws/src/rosOgre/run_from/plugins.cfg",
+		"/home/unnar/catkin_ws/src/rosOgre/run_from/Ogre.log",
+		"/home/unnar/catkin_ws/src/rosOgre/include/triangulation/triangulation.h",
+		"/home/unnar/catkin_ws/src/rosOgre/include/triangulation/triangulation.cpp",
+		"/home/unnar/catkin_ws/src/rosOgre/include/TutorialApplication.h",
+		"/home/unnar/catkin_ws/src/rosOgre/dist/media/models/ogrehead.mesh",
+		"/home/unnar/catkin_ws/src/rosOgre/dist/media/materials/scripts/Ogre.material",
+		"/home/unnar/catkin_ws/src/rosOgre/dist/bin/resources.cfg",
+		"/home/unnar/catkin_ws/src/rosOgre/dist/bin/plugins.cfg",
+		"/home/unnar/catkin_ws/src/rosOgre/dist/bin/ogre.cfg",
+		"/home/unnar/catkin_ws/src/rosOgre/dist/bin/mesh.vtk",
+		"/home/unnar/catkin_ws/src/rosOgre/dist/bin/Ogre.log",
+		"/home/unnar/catkin_ws/src/rosOgre/package.xml",
+		"/home/unnar/catkin_ws/src/rosOgre/README.md",
+		"/home/unnar/catkin_ws/src/rosOgre/Ogre.log",
+		"/home/unnar/catkin_ws/src/rosOgre/CMakeLists.txt",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/include/compression/plane_concave_hull.h",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/include/compression/cloud_triangulation.h",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/src/plane_compression.cpp",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/include/triangulation/triangulation.cpp",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/include/compression/cloud_filtering.h",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/include/compression/plane_extraction.h",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/include/compression/compress_methods.h",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/src/plane_test.cpp",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/include/compression/plane_compression_node.h",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/include/compression/plane_extraction_node.h",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/include/compression/filtering.h",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/include/exx_plane_extraction/compress_methods.h",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/include/exx_plane_extraction/plane_extraction.h",
+		"/home/unnar/.config/sublime-text-3/Packages/Alignment/Default (Linux).sublime-keymap",
+		"/home/unnar/.config/sublime-text-3/Packages/Theme - Spacegray/Spacegray Eighties.sublime-theme",
+		"/home/unnar/.config/sublime-text-3/Packages/Color Scheme - Default/LAZY.tmTheme",
+		"/home/unnar/sublime.tmtheme",
+		"/home/unnar/sublime-theme/sublime.sublime-theme",
+		"/home/unnar/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
+		"/home/unnar/Desktop/base16-eighties.dark.tmTheme",
+		"/home/unnar/.config/sublime-text-3/Packages/Default/Preferences.sublime-settings",
+		"/home/unnar/.config/sublime-text-3/Packages/User/GitGutter.sublime-settings",
+		"/home/unnar/.config/sublime-text-3/Packages/GitGutter/GitGutter.sublime-settings",
+		"/home/unnar/.config/sublime-text-3/Packages/Default/Default (Linux).sublime-keymap",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/src/clouds/mesh.vtk",
+		"/media/unnar/Downloads/transmission-postprocess-manual.sh",
+		"/usr/share/applications/viewer.desktop",
+		"/home/unnar/bash_aliases",
+		"/home/unnar/.config/sublime-text-3/Packages/User/Default (Linux).sublime-keymap",
+		"/home/unnar/.bashrc",
+		"/home/unnar/.bashcr",
+		"/home/unnar/catkin_ws/src/exx_wall_extraction/.git/config",
+		"/home/unnar/catkin_ws/src/beginner_tutorials/src/talker.cpp",
+		"/home/unnar/catkin_ws/src/beginner_tutorials/src/listener.cpp",
+		"/home/unnar/catkin_ws/src/beginner_tutorials/msg/Num.msg",
+		"/home/unnar/catkin_ws/src/beginner_tutorials/package.xml",
+		"/home/unnar/catkin_ws/src/beginner_tutorials/CMakeLists.txt"
+	],
+	"find":
+	{
+		"height": 30.0
+	},
+	"find_in_files":
+	{
+		"height": 118.0,
+		"where_history":
+		[
+			"/home/unnar/catkin_ws/src/rosOgre/include"
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"3",
+			"front",
+			"hullArea",
+			"float",
+			"pcl::MomentOfInertiaEstimation<PointT> feature_extractor;\n        PointT min_point_OBB;\n        PointT max_point_OBB;\n        PointT position_OBB;\n        Eigen::Matrix3f rotational_matrix_OBB;  \n        std::vector<float> moment_of_inertia;",
+			"plane_vec",
+			"c_planes",
+			"cm ",
+			"cm",
+			"c_planes",
+			"pcl::PointXYZ",
+			"g",
+			"                (*pit).",
+			"(*pit)",
+			"MeanK",
+			"saveVT",
+			"exx_common_node",
+			"savePath",
+			"super",
+			"triangulation",
+			"triangles_planes",
+			"Ogre::Real ",
+			"std::cout",
+			"printSelectedPoints",
+			"std::cout",
+			"base",
+			"a_",
+			"a",
+			"Points[0]",
+			"pointIdxNKNSearch",
+			"11",
+			"99",
+			" 2 ",
+			"2 ",
+			"12",
+			"15",
+			"87",
+			"88",
+			"[i",
+			"i",
+			"ind_loop",
+			"(i+1)*(j+1)-1",
+			"i*j",
+			"ogreManual",
+			"SdkTrays",
+			"SdkTrays.zip",
+			"PROJECT_BINARY_DIR",
+			"CMAKE_MODULE_PATH",
+			"/OGRE/",
+			"CONCAVEHULL_H",
+			"CONCAVEHULL",
+			"indices",
+			"PLANEEXTRACTION_H",
+			"PLANEEXTRACTION",
+			"PointNCloudT",
+			"leaf_size",
+			"Eigen",
+			" \n",
+			"pcl::PointXYZ",
+			"pcl::Normal",
+			"pcl::PointCloud<PointT>",
+			"new pcl::PointCloud<PointT> ",
+			" pcl::PointCloud<PointT>",
+			"pcl::PointCloud<PointT> ",
+			"pcl::PointCloud<PointT>",
+			" ());",
+			"pcl::PointCloud<PointT> ",
+			"pcl::PointCloud<PointT>",
+			"57",
+			"folder",
+			"gitg",
+			"number",
+			"functio",
+			"dasfæadslfkæalsdkf",
+			"PointCloudT",
+			"cloud",
+			"compressed_extracted_planes",
+			"compressed_extracted_projected_planes",
+			"(*planes)[i]",
+			"pcl::PointXYZ",
+			"at",
+			"x0x1.at",
+			".at",
+			"at",
+			"x0x1.at",
+			".at",
+			"last",
+			"cross",
+			"nextCheck",
+			"current",
+			"PointT",
+			"next",
+			"PointT next",
+			"PointT ",
+			"sor",
+			"        //sor",
+			"//",
+			"sor",
+			"        //sor",
+			"//",
+			"pcl::io"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 30.0
+	},
+	"input":
+	{
+		"height": 33.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 54.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.git":
+	{
+		"height": 74.0
+	},
+	"pinned_build_system": "",
+	"project": "mapping.sublime-project",
+	"replace":
+	{
+		"height": 56.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"",
+				"~/catkin_ws/src/strands_3d_mapping/metaroom_xml_parser/untitled.sublime-workspace"
+			]
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 147.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

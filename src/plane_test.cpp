@@ -208,7 +208,6 @@ public:
         EXX::planeFeatures features;
         features.setViewer(viewer);
         features.loadFeatures(c_planes, simplified_hulls, normal, normalInd, area, dataset, walls, floors);
-
         features.matchFeatures(dataset, indices);
         features.groupFeatures(indices, sets);
         printSetOfSets(sets, "Sets");
@@ -223,8 +222,8 @@ public:
             }     
             cGrad.getColorAtValue(double(++u)/double(sets.size()), r, g, b);
             for ( auto i : j ){
-                pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (simplified_hulls[i], r,g,b);
-                viewer->addPointCloud(simplified_hulls[i], single_color, std::to_string(++k));
+                pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], r,g,b);
+                viewer->addPointCloud(c_planes[i], single_color, std::to_string(++k));
             }
         }
 
