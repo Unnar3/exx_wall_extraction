@@ -7,7 +7,7 @@ SVVoxelResolution       : 0.02,
 SVSeedResolution        : 0.3,
 RANSACDistanceThreshold : 0.04,
 ECMinClusterSize        : 50,
-ECClusterTolerance      : 0.05,
+ECClusterTolerance      : 0.1,
 MeanK                   : 1,
 stdDev                  : 100.0,
 }

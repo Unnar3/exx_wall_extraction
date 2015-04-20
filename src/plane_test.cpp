@@ -93,12 +93,12 @@ public:
         pass.filter (*cloud);
         // pass.setInputCloud (cloud);
         // pass.setFilterFieldName ("z");
-        // pass.setFilterLimits (0.2, 0.8);
+        // pass.setFilterLimits (0.0, );
         // pass.filter (*cloud);
-        // pass.setInputCloud (cloud);
-        // pass.setFilterFieldName ("x");
-        // pass.setFilterLimits (1.2, 5.3);
-        // pass.filter (*cloud);
+        pass.setInputCloud (cloud);
+        pass.setFilterFieldName ("x");
+        pass.setFilterLimits (1.2, 5.3);
+        pass.filter (*cloud);
         pcl::io::savePCDFileBinary (savePath + "pass_cloud.pcd", *cloud);
         
         // auto sweep = SimpleXMLParser<PointT>::loadRoomFromXML("/home/unnar/catkin_ws/src/Metarooms/room_3/room.xml");
@@ -184,16 +184,13 @@ public:
         // cmprs.extractPlanesRANSAC(voxel_cloud, &pac);
         // cmprs.projectToPlane(&pac);
         std::vector<int> normalInd;
+        std::vector<double> area;
         cmprs.euclideanClusterPlanes(&plane_vec, &c_planes, &normalInd);
-        cmprs.planeToConcaveHull(&c_planes, &hulls);
+        cmprs.setHULLAlpha(1.0);
+        cmprs.planeToConvexHull(c_planes, hulls, area);
         cmprs.reumannWitkamLineSimplification( &hulls, &simplified_hulls);
         // cmprs.superVoxelClustering(&plane_vec, &super_planes);
         // cmprs.greedyProjectionTriangulationPlanes(voxel_cloud, &super_planes, &simplified_hulls, &cm);
-        
-        std::vector<EXX::planeDescriptor> vPlaneDescriptor;
-        // for (size_t i = 0; i < plane_vec.size(); ++i){
-        //     normalInd.push_back(i);
-        // }
         
         boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
         viewer->setBackgroundColor (0, 0, 0);
@@ -203,117 +200,33 @@ public:
         std::cout << "calculating features" << std::endl;
 
         std::set<std::set<int> > sets;
-        std::set<int> set;
-
+        std::set<int> walls;
+        std::set<int> floors;
         flann::Matrix<double> dataset;
         flann::Matrix<int> indices;
+        std::vector<int> set_size;
         EXX::planeFeatures features;
-        features.loadFeatures(c_planes, normal, normalInd, dataset);
+        features.setViewer(viewer);
+        features.loadFeatures(c_planes, simplified_hulls, normal, normalInd, area, dataset, walls, floors);
+
         features.matchFeatures(dataset, indices);
-        std::cout << "indices for plane 1" << std::endl;
-        for (size_t j = 0; j < indices.rows; ++j){
-            for (size_t i = 0; i < indices.cols; ++i){
-                if ( indices[j][i] == -1 ){ break; }
-                set.insert( indices[j][i] );
-                std::cout << indices[j][i] << ", ";
-            }
-            sets.insert(set);
-            set.clear();
-            std::cout << "" << std::endl;
-            std::cout << "" << std::endl;
-        }
-        std::cout << "hmmm" << std::endl;
-        std::cout << "haha" << std::endl;
-
-        for ( auto i : sets ){
-            for( auto j : i ){
-                std::cout << j << " ";
-            }
-            std::cout << " " << std::endl;
-            std::cout << " " << std::endl;
-        }
-        
-
-        // features.calculateFeatures(c_planes, simplified_hulls, normal, normalInd, &vPlaneDescriptor);
-        // std::vector<std::set<int> > sets;
-        // std::cout << "matching features" << std::endl;
-        // features.matchSimilarFeatures(vPlaneDescriptor, &sets);
-        // std::vector< std::set<int>> objects;
-        // features.findRepeatingObjects(c_planes, vPlaneDescriptor, sets, &objects);
-        
+        features.groupFeatures(indices, sets);
+        printSetOfSets(sets, "Sets");
 
         ColorGradient cGrad(5);
         int r,g,b;
-
+        int k = 0, u = 0;
         for( auto j : sets ){  
-            if (j.size() < 4) { continue; }     
+            if (j.size() < 1) { 
+                ++u;
+                continue; 
+            }     
+            cGrad.getColorAtValue(double(++u)/double(sets.size()), r, g, b);
             for ( auto i : j ){
-                cGrad.getColorAtValue(double(i)/double(sets.size()), r, g, b);
-                pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], r,g,b);
-                viewer->addPointCloud(c_planes[i], single_color, std::to_string(i));
+                pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (simplified_hulls[i], r,g,b);
+                viewer->addPointCloud(simplified_hulls[i], single_color, std::to_string(++k));
             }
         }
-        // for (auto i : sets){
-        //     for (auto j : i){
-        //         pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[j], 255,0,0);
-        //         viewer->addPointCloud(c_planes[j], single_color, std::to_string(j)); 
-        //     }
-        //     for (size_t k = 0; k < 50; ++k){
-        //         viewer->spinOnce (100);
-        //     }
-        //     for (auto j : i){
-        //         viewer->removePointCloud(std::to_string(j)); 
-        //     }
-
-        // }
-
-        // for ( size_t i = 0; i < objects.size(); ++i ){
-        //     cGrad.getColorAtValue(double(i)/double(objects.size()), r, g, b);
-        //     for (auto j : objects[i]){
-        //         for (auto k : sets[j]){
-        //             pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[k], r,g,b);
-        //             viewer->addPointCloud(c_planes[k], single_color, std::to_string(i) + std::to_string(j)+ std::to_string(k));
-        //         }
-        //     }
-        // }
-
-        // double sets_s = sets.size()+1;
-        // bool includeWalls = true;
-        // for (size_t i = 0; i < c_planes.size(); ++i){
-            
-        //     // cGrad.getColorAtValue(1, r, g, b);
-        //     // Not part of a set
-            
-        //     r = 208;
-        //     g = 28;
-        //     b = 139;
-        //     for (size_t j = 0; j < sets.size(); ++j){
-        //         if ( sets.at(j).count(i) ){
-        //             if ( j == sets.size()-1){ // walls
-        //                 r = 233;
-        //                 g = 163;
-        //                 b = 201;
-        //                 // includeWalls = false;
-        //             }
-        //             else if ( j == sets.size()-2 ) { // floor
-        //                 r = 90;
-        //                 g = 180;
-        //                 b = 172;
-        //                 // includeWalls = false;
-        //             }
-        //             else{
-        //                 cGrad.getColorAtValue(double(j+1)/sets_s, r, g, b);
-        //                 break;
-        //             }
-        //         }
-        //     }
-
-        //     if (includeWalls){
-        //         pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], r,g,b);
-        //         viewer->addPointCloud(c_planes[i], single_color, std::to_string(i));   
-        //     }
-        //     includeWalls = true;
-        // }
 
         while(!viewer->wasStopped())
         {
@@ -323,6 +236,39 @@ public:
     }
 
 private:
+    void printSet(std::set<int> a, std::string name){
+        std::cout << "printing set " << name << ": ";
+        for ( auto i : a ){
+            std::cout << i << " ";
+        }
+        std::cout << " " << std::endl;
+    }
+
+    void printSetOfSets(std::set<std::set<int> > a, std::string name){
+        std::cout << "Printing set of sets: " << name << std::endl;
+        int ite = 0;
+        for ( auto i:a ){
+            std::cout << "set " << ++ite << ": ";
+            for ( auto j:i){
+                std::cout << j << " ";
+            }
+            std::cout << " " << std::endl;
+        }
+    }
+
+    int maxIndex(std::vector<int> a){
+        std::cout << " " << std::endl;
+        std::cout << "print vector:" << std::endl;
+        for (auto i : a){
+            std::cout << i << " ";
+        }
+        std::cout << " " << std::endl;
+        int b = std::distance(a.begin(), std::max_element(a.begin(), a.end()));
+        std::cout << "index: " << b << std::endl;
+        std::cout << " " << std::endl;
+        return b;
+    }
+
     // Takes in two vectors, returns angle between them in range 0 to 1  
     // where 1 means no difference, pi/2 is cnsidered maximum angle and pi as 0.
     double angleBetweenVectors(Eigen::Vector4d a, Eigen::Vector4d b){
@@ -439,6 +385,5 @@ int main(int argc, char **argv) {
 
 
     test.testCompression();
-    std::cout << "strange" << std::endl;
     return 0;
 }
