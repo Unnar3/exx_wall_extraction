@@ -411,7 +411,7 @@
 			"file": "src/plane_test.cpp",
 			"settings":
 			{
-				"buffer_size": 14387,
+				"buffer_size": 15123,
 				"line_ending": "Unix"
 			}
 		},
@@ -832,15 +832,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 14387,
+						"buffer_size": 15123,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								8020,
-								8020
+								8901,
+								8901
 							]
 						],
 						"settings":
@@ -909,7 +909,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 1083.0,
+						"translation.y": 4032.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,

@@ -202,8 +202,13 @@ public:
         EXX::planeFeatures features;
         EXX::featureSet fSet;
         // features.setViewer(viewer);
+        std::cout << "Loading Features" << std::endl;
         features.loadFeatures(c_planes, normal, normalInd, fSet);
+        std::cout << "improving Walls" << std::endl;
+        features.improveWalls(c_planes, fSet);
+        std::cout << "Matching Features" << std::endl;
         features.matchFeatures(fSet);
+        std::cout << "Grouping features" << std::endl;
         features.groupFeatures(fSet);
         printSetOfSets(fSet.objects, "Sets");
 
@@ -229,6 +234,15 @@ public:
             // for ( auto i:j ){
             //     viewer->removePointCloud(std::to_string(i));
             // }
+        }
+
+        for (auto i : fSet.walls){
+            pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], 155,89,182);
+            viewer->addPointCloud(c_planes[i], single_color, std::to_string(i));
+        }
+        for (auto i : fSet.floors){
+            pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], 241,196,15);
+            viewer->addPointCloud(c_planes[i], single_color, std::to_string(i));
         }
 
         while(!viewer->wasStopped())
