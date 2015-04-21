@@ -86,19 +86,19 @@ public:
         pcl::io::loadPCDFile (cloudPath, *cloud);
 
         // Create the filtering object
-        pcl::PassThrough<PointT> pass;
-        pass.setInputCloud (cloud);
-        pass.setFilterFieldName ("y");
-        pass.setFilterLimits (-2.5, -1.0);
-        pass.filter (*cloud);
+        // pcl::PassThrough<PointT> pass;
+        // pass.setInputCloud (cloud);
+        // pass.setFilterFieldName ("y");
+        // pass.setFilterLimits (-2.5, -1.0);
+        // pass.filter (*cloud);
         // pass.setInputCloud (cloud);
         // pass.setFilterFieldName ("z");
         // pass.setFilterLimits (0.0, );
         // pass.filter (*cloud);
-        pass.setInputCloud (cloud);
-        pass.setFilterFieldName ("x");
-        pass.setFilterLimits (1.2, 5.3);
-        pass.filter (*cloud);
+        // pass.setInputCloud (cloud);
+        // pass.setFilterFieldName ("x");
+        // pass.setFilterLimits (1.2, 5.3);
+        // pass.filter (*cloud);
         pcl::io::savePCDFileBinary (savePath + "pass_cloud.pcd", *cloud);
         
         // auto sweep = SimpleXMLParser<PointT>::loadRoomFromXML("/home/unnar/catkin_ws/src/Metarooms/room_3/room.xml");
@@ -199,32 +199,36 @@ public:
 
         std::cout << "calculating features" << std::endl;
 
-        std::set<std::set<int> > sets;
-        std::set<int> walls;
-        std::set<int> floors;
-        flann::Matrix<double> dataset;
-        flann::Matrix<int> indices;
-        std::vector<int> set_size;
         EXX::planeFeatures features;
-        features.setViewer(viewer);
-        features.loadFeatures(c_planes, simplified_hulls, normal, normalInd, area, dataset, walls, floors);
-        features.matchFeatures(dataset, indices);
-        features.groupFeatures(indices, sets);
-        printSetOfSets(sets, "Sets");
+        EXX::featureSet fSet;
+        // features.setViewer(viewer);
+        features.loadFeatures(c_planes, normal, normalInd, fSet);
+        features.matchFeatures(fSet);
+        features.groupFeatures(fSet);
+        printSetOfSets(fSet.objects, "Sets");
 
         ColorGradient cGrad(5);
         int r,g,b;
         int k = 0, u = 0;
-        for( auto j : sets ){  
+        bool wait = true;
+        for( auto j : fSet.objects ){  
             if (j.size() < 1) { 
                 ++u;
                 continue; 
             }     
-            cGrad.getColorAtValue(double(++u)/double(sets.size()), r, g, b);
+            wait = true;
+            cGrad.getColorAtValue(double(++u)/double(fSet.objects.size()), r, g, b);
             for ( auto i : j ){
                 pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], r,g,b);
-                viewer->addPointCloud(c_planes[i], single_color, std::to_string(++k));
+                viewer->addPointCloud(c_planes[i], single_color, std::to_string(i));
             }
+            // for ( size_t i = 0; i < 50; ++i ){
+            //     viewer->spinOnce (100);
+            //     boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+            // }
+            // for ( auto i:j ){
+            //     viewer->removePointCloud(std::to_string(i));
+            // }
         }
 
         while(!viewer->wasStopped())
