@@ -31,7 +31,7 @@ catkin_package(
 	DEPENDS
 	CATKIN_DEPENDS message_runtime exx_compression qt_build libqt4-dev
 )
-include_directories(moment_of_inertia include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 
 add_executable(plane_test src/plane_test.cpp)

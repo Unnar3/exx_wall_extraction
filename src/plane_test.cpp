@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <pcl_ros/transforms.h>
 #include <exx_compression/compression.h>
+#include <dbscan/dbscan.h>
 #include <plane_features/plane_features.h>
 // PCL specific includes
 #include <pcl/io/pcd_io.h>
@@ -10,7 +11,6 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/statistical_outlier_removal.h>
-#include "moment_of_inertia_estimation.h"
 #include "color_gradient.h"
 #include <pcl/visualization/cloud_viewer.h>
 #include <ransac_primitives/primitive_core.h>
@@ -86,10 +86,10 @@ public:
         pcl::io::loadPCDFile (cloudPath, *cloud);
 
         // Create the filtering object
-        // pcl::PassThrough<PointT> pass;
-        // pass.setInputCloud (cloud);
-        // pass.setFilterFieldName ("y");
-        // pass.setFilterLimits (-2.5, -1.0);
+        pcl::PassThrough<PointT> pass;
+        pass.setInputCloud (cloud);
+        pass.setFilterFieldName ("y");
+        pass.setFilterLimits (-2.5, -1.0);
         // pass.filter (*cloud);
         // pass.setInputCloud (cloud);
         // pass.setFilterFieldName ("z");
@@ -185,6 +185,7 @@ public:
         // cmprs.projectToPlane(&pac);
         std::vector<int> normalInd;
         std::vector<double> area;
+
         cmprs.euclideanClusterPlanes(&plane_vec, &c_planes, &normalInd);
         cmprs.setHULLAlpha(1.0);
         cmprs.planeToConvexHull(c_planes, hulls, area);
@@ -201,16 +202,18 @@ public:
 
         EXX::planeFeatures features;
         EXX::featureSet fSet;
+        features.setCentroidToWallDistance(0.1f);
         // features.setViewer(viewer);
         std::cout << "Loading Features" << std::endl;
         features.loadFeatures(c_planes, normal, normalInd, fSet);
-        std::cout << "improving Walls" << std::endl;
-        features.improveWalls(c_planes, fSet);
         std::cout << "Matching Features" << std::endl;
-        features.matchFeatures(fSet);
+        std::vector<std::vector<int> > c;
+        features.matchFeatures(fSet, c);
         std::cout << "Grouping features" << std::endl;
         features.groupFeatures(fSet);
-        printSetOfSets(fSet.objects, "Sets");
+        std::cout << "improving Walls" << std::endl;
+        features.improveWalls(c_planes, fSet);
+        // printSetOfSets(fSet.objects, "Sets");
 
         ColorGradient cGrad(5);
         int r,g,b;
@@ -236,14 +239,14 @@ public:
             // }
         }
 
-        for (auto i : fSet.walls){
-            pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], 155,89,182);
-            viewer->addPointCloud(c_planes[i], single_color, std::to_string(i));
-        }
-        for (auto i : fSet.floors){
-            pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], 241,196,15);
-            viewer->addPointCloud(c_planes[i], single_color, std::to_string(i));
-        }
+        // for (auto i : fSet.walls){
+        //     pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], 155,89,182);
+        //     viewer->addPointCloud(c_planes[i], single_color, std::to_string(i));
+        // }
+        // for (auto i : fSet.floors){
+        //     pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], 241,196,15);
+        //     viewer->addPointCloud(c_planes[i], single_color, std::to_string(i));
+        // }
 
         while(!viewer->wasStopped())
         {
