@@ -192,11 +192,6 @@ public:
         cmprs.reumannWitkamLineSimplification( &hulls, &simplified_hulls);
         // cmprs.superVoxelClustering(&plane_vec, &super_planes);
         // cmprs.greedyProjectionTriangulationPlanes(voxel_cloud, &super_planes, &simplified_hulls, &cm);
-        
-        boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
-        viewer->setBackgroundColor (0, 0, 0);
-        viewer->addCoordinateSystem (1.0);
-        viewer->initCameraParameters ();
 
         std::cout << "calculating features" << std::endl;
 
@@ -214,6 +209,12 @@ public:
         std::cout << "improving Walls" << std::endl;
         features.improveWalls(c_planes, fSet);
         // printSetOfSets(fSet.objects, "Sets");
+
+
+        boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+        viewer->setBackgroundColor (0, 0, 0);
+        viewer->addCoordinateSystem (1.0);
+        viewer->initCameraParameters ();
 
         ColorGradient cGrad(5);
         int r,g,b;
@@ -248,9 +249,24 @@ public:
         //     viewer->addPointCloud(c_planes[i], single_color, std::to_string(i));
         // }
 
-        while(!viewer->wasStopped())
+        boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2 (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+        viewer2->setBackgroundColor (0, 0, 0);
+        viewer2->addCoordinateSystem (1.0);
+        viewer2->initCameraParameters ();
+
+        k = 0; u = 0;
+        for (auto vec : c){
+            cGrad.getColorAtValue(double(++u)/double(c.size()), r, g, b);
+            for (auto i : vec){
+                pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], r,g,b);
+                viewer2->addPointCloud(c_planes[i], single_color, std::to_string(i));
+            }
+        }
+
+        while(!viewer->wasStopped() || !viewer2->wasStopped())
         {
             viewer->spinOnce (100);
+            viewer2->spinOnce (100);
             boost::this_thread::sleep (boost::posix_time::microseconds (100000));
         }
     }
