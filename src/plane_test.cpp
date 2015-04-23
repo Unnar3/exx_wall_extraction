@@ -89,8 +89,8 @@ public:
         pcl::PassThrough<PointT> pass;
         pass.setInputCloud (cloud);
         pass.setFilterFieldName ("y");
-        pass.setFilterLimits (-2.5, -1.0);
-        // pass.filter (*cloud);
+        pass.setFilterLimits (-3.0, -0.0);
+        pass.filter (*cloud);
         // pass.setInputCloud (cloud);
         // pass.setFilterFieldName ("z");
         // pass.setFilterLimits (0.0, );
@@ -204,41 +204,41 @@ public:
         std::cout << "Matching Features" << std::endl;
         std::vector<std::vector<int> > c;
         features.matchFeatures(fSet, c);
-        std::cout << "Grouping features" << std::endl;
-        features.groupFeatures(fSet);
+        // std::cout << "Grouping features" << std::endl;
+        // features.groupFeatures(fSet);
         std::cout << "improving Walls" << std::endl;
-        features.improveWalls(c_planes, fSet);
+        features.improveWalls(c_planes, fSet, c);
         // printSetOfSets(fSet.objects, "Sets");
 
 
-        boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
-        viewer->setBackgroundColor (0, 0, 0);
-        viewer->addCoordinateSystem (1.0);
-        viewer->initCameraParameters ();
+        // boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+        // viewer->setBackgroundColor (0, 0, 0);
+        // viewer->addCoordinateSystem (1.0);
+        // viewer->initCameraParameters ();
 
         ColorGradient cGrad(5);
         int r,g,b;
         int k = 0, u = 0;
-        bool wait = true;
-        for( auto j : fSet.objects ){  
-            if (j.size() < 1) { 
-                ++u;
-                continue; 
-            }     
-            wait = true;
-            cGrad.getColorAtValue(double(++u)/double(fSet.objects.size()), r, g, b);
-            for ( auto i : j ){
-                pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], r,g,b);
-                viewer->addPointCloud(c_planes[i], single_color, std::to_string(i));
-            }
-            // for ( size_t i = 0; i < 50; ++i ){
-            //     viewer->spinOnce (100);
-            //     boost::this_thread::sleep (boost::posix_time::microseconds (100000));
-            // }
-            // for ( auto i:j ){
-            //     viewer->removePointCloud(std::to_string(i));
-            // }
-        }
+        // bool wait = true;
+        // for( auto j : fSet.objects ){  
+        //     if (j.size() < 1) { 
+        //         ++u;
+        //         continue; 
+        //     }     
+        //     wait = true;
+        //     cGrad.getColorAtValue(double(++u)/double(fSet.objects.size()), r, g, b);
+        //     for ( auto i : j ){
+        //         pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], r,g,b);
+        //         viewer->addPointCloud(c_planes[i], single_color, std::to_string(i));
+        //     }
+        //     // for ( size_t i = 0; i < 50; ++i ){
+        //     //     viewer->spinOnce (100);
+        //     //     boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+        //     // }
+        //     // for ( auto i:j ){
+        //     //     viewer->removePointCloud(std::to_string(i));
+        //     // }
+        // }
 
         // for (auto i : fSet.walls){
         //     pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], 155,89,182);
@@ -259,13 +259,12 @@ public:
             cGrad.getColorAtValue(double(++u)/double(c.size()), r, g, b);
             for (auto i : vec){
                 pcl::visualization::PointCloudColorHandlerCustom<PointT> single_color (c_planes[i], r,g,b);
-                viewer2->addPointCloud(c_planes[i], single_color, std::to_string(i));
+                viewer2->addPointCloud(c_planes[i], single_color, "s" + std::to_string(k++));
             }
         }
 
-        while(!viewer->wasStopped() || !viewer2->wasStopped())
+        while(!viewer2->wasStopped())
         {
-            viewer->spinOnce (100);
             viewer2->spinOnce (100);
             boost::this_thread::sleep (boost::posix_time::microseconds (100000));
         }
