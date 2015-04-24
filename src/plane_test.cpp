@@ -189,9 +189,11 @@ public:
         cmprs.euclideanClusterPlanes(&plane_vec, &c_planes, &normalInd);
         cmprs.setHULLAlpha(1.0);
         cmprs.planeToConvexHull(c_planes, hulls, area);
-        cmprs.reumannWitkamLineSimplification( &hulls, &simplified_hulls);
-        // cmprs.superVoxelClustering(&plane_vec, &super_planes);
-        // cmprs.greedyProjectionTriangulationPlanes(voxel_cloud, &super_planes, &simplified_hulls, &cm);
+        std::vector<EXX::densityDescriptor> dDesc;
+        cmprs.getPlaneDensity( c_planes, hulls, dDesc);
+        cmprs.reumannWitkamLineSimplification( &hulls, &simplified_hulls, dDesc);
+        // cmprs.superVoxelClustering(&plane_vec, &super_planes, dDesk);
+        // cmprs.greedyProjectionTriangulationPlanes(voxel_cloud, &super_planes, &simplified_hulls, &cm, dDesc);
 
         std::cout << "calculating features" << std::endl;
 
