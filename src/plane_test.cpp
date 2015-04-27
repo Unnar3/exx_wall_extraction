@@ -86,11 +86,11 @@ public:
         pcl::io::loadPCDFile (cloudPath, *cloud);
 
         // Create the filtering object
-        pcl::PassThrough<PointT> pass;
-        pass.setInputCloud (cloud);
-        pass.setFilterFieldName ("y");
-        pass.setFilterLimits (-3.0, -0.0);
-        pass.filter (*cloud);
+        // pcl::PassThrough<PointT> pass;
+        // pass.setInputCloud (cloud);
+        // pass.setFilterFieldName ("y");
+        // pass.setFilterLimits (-3.0, -0.0);
+        // pass.filter (*cloud);
         // pass.setInputCloud (cloud);
         // pass.setFilterFieldName ("z");
         // pass.setFilterLimits (0.0, );
